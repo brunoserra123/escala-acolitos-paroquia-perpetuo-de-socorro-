@@ -2046,6 +2046,63 @@ window.deleteServer = async function(serverId) {
     }
 };
 
+window.deleteAllServers = async function() {
+    if (!servers || servers.length === 0) {
+        showToast("Não há servidores para limpar.");
+        return;
+    }
+
+    const confirmMsg = `⚠️ ATENÇÃO: Tem certeza que deseja apagar TODOS os ${servers.length} servidores cadastrados?\n\nIsso limpará a lista completamente para que você possa cadastrar os nomes da Paróquia Perpétuo de Socorro.`;
+    if (!confirm(confirmMsg)) return;
+
+    const btn = document.getElementById('btn-clear-all-servers');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "⏳ Apagando...";
+    }
+
+    try {
+        for (const s of [...servers]) {
+            try {
+                await supabaseClient.from('attendance').delete().eq('server_id', s.id);
+                await supabaseClient.from('servers').delete().eq('id', s.id);
+            } catch (e) {
+                console.warn("Erro ao deletar servidor id " + s.id, e);
+            }
+        }
+
+        servers = [];
+        attendanceData = [];
+
+        showToast("Todos os nomes foram apagados com sucesso! 🗑️");
+
+        renderServerSelect();
+        renderServersAdminList();
+        renderQuemVaiServir();
+        renderPublicScale();
+        updateAttendanceList();
+        renderMassesReport();
+        updateGeneralList();
+        updateChart();
+    } catch (err) {
+        console.error("Erro ao apagar servidores:", err);
+        showToast("Erro ao apagar todos os servidores.");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = "🗑️ Limpar Todos os Nomes";
+        }
+    }
+};
+
+window.clearSelectedName = function() {
+    if (selectName) {
+        selectName.value = "";
+        updateTicksForSelectedServer();
+        showToast("Seleção de nome limpa.");
+    }
+};
+
 window.confirmAllCurrentMass = async function() {
     if (!selectedMassId) {
         showToast("Selecione uma missa primeiro!");

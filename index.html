@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coordenação Perpétuo de Socorro</title>
-    <link rel="stylesheet" href="style.css?v=6.0">
+    <link rel="stylesheet" href="style.css?v=6.1">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -85,7 +85,10 @@
                         </div>
 
                         <div class="form-group form-group-name">
-                            <label for="select-name">Seu Nome</label>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <label for="select-name" style="margin-bottom:0;">Seu Nome</label>
+                                <button type="button" id="btn-limpar-nome-selecionado" onclick="clearSelectedName()" style="background:none; border:none; color:var(--text-light); font-size:0.75rem; cursor:pointer; text-decoration:underline;">✕ Limpar seleção</button>
+                            </div>
                             <select id="select-name" required>
                                 <option value="" disabled selected>Escolha seu nome...</option>
                             </select>
@@ -362,6 +365,9 @@
                                 <option value="Acólito">Apenas Acólitos</option>
                                 <option value="Coroinha">Apenas Coroinhas</option>
                             </select>
+                            <button type="button" id="btn-clear-all-servers" class="btn-clear-all" onclick="deleteAllServers()" style="background:#dc2626; color:white; border:none; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; gap:6px;" title="Apagar todos os nomes da lista">
+                                🗑️ Limpar Todos os Nomes
+                            </button>
                         </div>
                     </div>
 
@@ -457,6 +463,6 @@
     
     <!-- Cliente do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=5.0"></script>
+    <script src="app.js?v=6.0"></script>
 </body>
 </html>
