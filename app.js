@@ -3,6 +3,9 @@ const supabaseUrl = 'https://uokmwzqqwpojfxrdiuzg.supabase.co';
 const supabaseKey = 'sb_publishable_SQd6xVIZnFqAbqwgFel_cw_J-cOIsPO';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+// --- SENHA DOS COORDENADORES (Altere aqui para a senha desejada) ---
+const SENHA_COORDENADOR = 'amoservir';
+
 // Dados dinâmicos
 let servers = [];
 let attendanceData = [];
@@ -255,20 +258,7 @@ async function fetchData() {
         const { data: sData, error: sErr } = await supabaseClient.from('servers').select('*');
         if (sErr) throw sErr;
         servers = sData || [];
-
-        // Garante que o Coroinha Davi esteja presente na lista de servidores
-        if (!servers.some(s => s.nome.trim().toLowerCase() === 'davi')) {
-            try {
-                const { data: newDavi, error: daviErr } = await supabaseClient
-                    .from('servers')
-                    .insert([{ nome: 'Davi', cargo: 'Coroinha' }])
-                    .select();
-                if (!daviErr && newDavi && newDavi.length > 0) {
-                    servers.push(newDavi[0]);
-                } else {
-                    servers.push({ id: 22, nome: 'Davi', cargo: 'Coroinha' });
-                }
-            } catch (e) {
+        // Lista de servidores carregada da base de dados catch (e) {
                 servers.push({ id: 22, nome: 'Davi', cargo: 'Coroinha' });
             }
         }
@@ -353,7 +343,7 @@ function setupNavigation() {
         const verify = () => {
             const senha = input.value.trim();
             console.log('Senha digitada:', senha);
-            if (senha === "121008") {
+            if (senha.toLowerCase() === SENHA_COORDENADOR.toLowerCase()) {
                 console.log('Senha correta – exibindo viewControle');
                 hideModal();
                 if (viewControle) {
@@ -2700,7 +2690,7 @@ function exportToPDF() {
     const monthName = MONTH_NAMES[selectedMonth];
     const opt = {
         margin: 10,
-        filename: `Escala_Sagrada_Familia_${monthName}_${selectedYear}.pdf`,
+        filename: `Escala_Perpetuo_de_Socorro_${monthName}_${selectedYear}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -2762,7 +2752,7 @@ function exportToExcel() {
         ];
         worksheet['!cols'] = wscols;
 
-        XLSX.writeFile(workbook, `Escala_Sagrada_Familia_${monthText}.xlsx`);
+        XLSX.writeFile(workbook, `Escala_Perpetuo_de_Socorro_${monthText}.xlsx`);
         showToast("Excel mensal gerado com sucesso! 📊");
     } catch (error) {
         console.error("Erro ao exportar Excel:", error);

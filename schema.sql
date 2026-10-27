@@ -24,33 +24,8 @@ CREATE TABLE public.special_masses (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- Inserindo os dados iniciais dos coroinhas e acólitos
-INSERT INTO public.servers (id, nome, cargo) VALUES
-(1, 'Arthur', 'Acólito'),
-(2, 'Benjamin', 'Coroinha'),
-(3, 'Caio', 'Coroinha'),
-(4, 'Eduardo', 'Acólito'),
-(5, 'Enrique', 'Acólito'),
-(6, 'Felipe', 'Acólito'),
-(7, 'Filipe', 'Acólito'),
-(8, 'Guga', 'Coroinha'),
-(9, 'Guilherme', 'Acólito'),
-(10, 'Gusta', 'Acólito'),
-(11, 'Henrique Kolbe', 'Coroinha'),
-(12, 'João Vitor', 'Coroinha'),
-(13, 'Lucas Davi', 'Coroinha'),
-(14, 'Lucas S', 'Coroinha'),
-(15, 'Luiggi', 'Acólito'),
-(16, 'Martin', 'Coroinha'),
-(17, 'Michel', 'Acólito'),
-(18, 'Pedro Deveza', 'Acólito'),
-(19, 'Pedro L', 'Acólito'),
-(20, 'Rafael Kolbe', 'Coroinha'),
-(21, 'Rafael Ross', 'Acólito'),
-(22, 'Davi', 'Coroinha');
-
--- Reinicia a sequência do ID para os próximos inseridos automaticamente não darem erro
-ALTER SEQUENCE public.servers_id_seq RESTART WITH 23;
+-- Tabela de servidores limpa pronta para novos cadastros
+-- ALTER SEQUENCE public.servers_id_seq RESTART WITH 1;
 
 -- Habilitar Políticas de Segurança de Nível de Linha (RLS)
 ALTER TABLE public.servers ENABLE ROW LEVEL SECURITY;

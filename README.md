@@ -1,6 +1,6 @@
-# ⛪ Paróquia Sagrada Família - Escala de Coroinhas e Acólitos
+# ⛪ Paróquia Perpétuo de Socorro - Escala de Coroinhas e Acólitos
 
-Sistema de coordenação e auto-escala desenvolvido para a **Paróquia Sagrada Família**, sob a coordenação de **Luiggi Barudi**. Este aplicativo permite que coroinhas e acólitos se programem para as missas do mês completo de forma ágil, visual e centralizada.
+Sistema de coordenação e auto-escala desenvolvido para a **Paróquia Perpétuo de Socorro**, sob a coordenação de **Luiggi Barudi**. Este aplicativo permite que coroinhas e acólitos se programem para as missas do mês completo de forma ágil, visual e centralizada.
 
 ---
 
@@ -54,7 +54,7 @@ O projeto foi construído utilizando tecnologias Web puras (Vanilla JS), o que o
 
 ## 👤 Coordenação
 **Luiggi Barudi**  
-*Paróquia Sagrada Família*
+*Paróquia Perpétuo de Socorro*
 
 ---
 *Desenvolvido com foco na agilidade e no serviço litúrgico.*

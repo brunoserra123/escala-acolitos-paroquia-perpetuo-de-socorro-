@@ -42,5 +42,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor Sagrada Família ativo em http://localhost:${PORT}/`);
+    console.log(`Servidor Perpétuo de Socorro ativo em http://localhost:${PORT}/`);
 });

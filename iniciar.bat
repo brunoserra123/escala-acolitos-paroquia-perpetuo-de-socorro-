@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
 echo ===================================================
-echo     Iniciando Sistema Sagrada Familia
+echo     Iniciando Sistema Perpétuo de Socorro
 echo ===================================================
 echo.
 echo 1. Fechando instancias antigas...
@@ -9,7 +9,7 @@ taskkill /F /IM python.exe 2>nul
 timeout /t 1 /nobreak >nul
 
 echo 2. Abrindo o servidor em segundo plano...
-start "Servidor Sagrada Familia - NAO FECHE ESTA JANELA" python -m http.server 8080
+start "Servidor Perpétuo de Socorro - NAO FECHE ESTA JANELA" python -m http.server 8080
 
 echo 3. Aguardando servidor iniciar...
 timeout /t 2 /nobreak >nul
