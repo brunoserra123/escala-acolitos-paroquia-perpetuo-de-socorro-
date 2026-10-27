@@ -9,6 +9,25 @@ function getSenhaCoordenador() {
     return localStorage.getItem('senha_coordenador') || SENHA_COORDENADOR_PADRAO;
 }
 
+// --- METAS DE QUANTIDADE DE SERVIDORES POR MISSA ---
+function getMetaAcolitos() {
+    const val = parseInt(localStorage.getItem('meta_acolitos_missa') || '2', 10);
+    return isNaN(val) || val < 1 ? 2 : val;
+}
+function getMetaCoroinhas() {
+    const val = parseInt(localStorage.getItem('meta_coroinhas_missa') || '2', 10);
+    return isNaN(val) || val < 0 ? 2 : val;
+}
+function getMetaTotal() {
+    return getMetaAcolitos() + getMetaCoroinhas();
+}
+function syncMetaInputs() {
+    const metaAcoInput = document.getElementById('meta-acolitos');
+    const metaCorInput = document.getElementById('meta-coroinhas');
+    if (metaAcoInput) metaAcoInput.value = getMetaAcolitos();
+    if (metaCorInput) metaCorInput.value = getMetaCoroinhas();
+}
+
 // Dados dinâmicos
 let servers = [];
 let attendanceData = [];
@@ -32,6 +51,17 @@ const MONTH_NAMES = [
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 
+// Grade Oficial da Paróquia Perpétuo de Socorro (Segunda a Domingo)
+const GRADE_PERPETUO_SOCORRO = {
+    0: { dia: 'Domingo', prefix: 'dom', horarios: ['08:00', '10:00', '12:00', '17:00', '19:00', '21:00'] },
+    1: { dia: 'Segunda-feira', prefix: 'seg', horarios: ['08:00', '19:00'] },
+    2: { dia: 'Terça-feira', prefix: 'ter', horarios: ['08:00', '19:00'] },
+    3: { dia: 'Quarta-feira', prefix: 'qua', horarios: ['08:00', '19:00'] }, // Novena Perpétua
+    4: { dia: 'Quinta-feira', prefix: 'qui', horarios: ['08:00', '17:00', '19:00'] }, // 17:00 Missa da Saúde
+    5: { dia: 'Sexta-feira', prefix: 'sex', horarios: ['08:00', '19:00'] },
+    6: { dia: 'Sábado', prefix: 'sab', horarios: ['08:00', '18:00'] }
+};
+
 // Cálculo e Geração das Missas do Mês
 function calculateMonthMassSchedules(year, month) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -39,11 +69,11 @@ function calculateMonthMassSchedules(year, month) {
     const groups = [];
     
     let currentGroup = null;
-    let weekendCount = 0;
+    let weekCount = 0;
     
     for (let day = 1; day <= daysInMonth; day++) {
         const d = new Date(year, month, day);
-        const dayOfWeek = d.getDay(); // 0=Dom, 6=Sáb
+        const dayOfWeek = d.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
         
         const dd = String(day).padStart(2, '0');
         const mm = String(month + 1).padStart(2, '0');
@@ -51,63 +81,47 @@ function calculateMonthMassSchedules(year, month) {
         const dateFormatted = `${dd}/${mm}`;
         const isoDate = `${yyyy}-${mm}-${dd}`;
         
-        if (dayOfWeek === 6) { // Sábado
-            weekendCount++;
+        // Nova semana inicia na segunda-feira ou no primeiro dia do mês
+        if (!currentGroup || dayOfWeek === 1) {
+            weekCount++;
             currentGroup = {
-                index: weekendCount,
+                index: weekCount,
+                startDate: dateFormatted,
+                endDate: dateFormatted,
                 dates: [dateFormatted],
                 masses: []
             };
             groups.push(currentGroup);
-            
-            const mass = {
-                id: `sab-17-${isoDate}`,
-                dia: 'Sábado',
-                data: dateFormatted,
-                hora: '17:00',
-                isoDate: isoDate,
-                dayOfWeek: 6,
-                weekendIndex: weekendCount
-            };
-            schedules.push(mass);
-            currentGroup.masses.push(mass);
-        } else if (dayOfWeek === 0) { // Domingo
-            if (!currentGroup) {
-                weekendCount++;
-                currentGroup = {
-                    index: weekendCount,
-                    dates: [dateFormatted],
-                    masses: []
-                };
-                groups.push(currentGroup);
-            } else {
+        } else {
+            currentGroup.endDate = dateFormatted;
+            if (!currentGroup.dates.includes(dateFormatted)) {
                 currentGroup.dates.push(dateFormatted);
             }
-            
-            const domMasses = [
-                { id: `dom-09-${isoDate}`, dia: 'Domingo', data: dateFormatted, hora: '09:00', isoDate: isoDate, dayOfWeek: 0, weekendIndex: weekendCount },
-                { id: `dom-11-${isoDate}`, dia: 'Domingo', data: dateFormatted, hora: '11:00', isoDate: isoDate, dayOfWeek: 0, weekendIndex: weekendCount },
-                { id: `dom-18-${isoDate}`, dia: 'Domingo', data: dateFormatted, hora: '18:30', isoDate: isoDate, dayOfWeek: 0, weekendIndex: weekendCount }
-            ];
-            
-            domMasses.forEach(m => {
-                schedules.push(m);
-                currentGroup.masses.push(m);
+        }
+        
+        const info = GRADE_PERPETUO_SOCORRO[dayOfWeek];
+        if (info && info.horarios) {
+            info.horarios.forEach(hora => {
+                const horaClean = hora.replace(':', '');
+                const mass = {
+                    id: `${info.prefix}-${horaClean}-${isoDate}`,
+                    dia: info.dia,
+                    data: dateFormatted,
+                    hora: hora,
+                    isoDate: isoDate,
+                    dayOfWeek: dayOfWeek,
+                    weekendIndex: weekCount
+                };
+                schedules.push(mass);
+                currentGroup.masses.push(mass);
             });
-            
-            currentGroup = null;
         }
     }
     
-    // Atualizar labels dos grupos
+    // Atualizar labels dos grupos por semana
     groups.forEach(g => {
-        if (g.dates.length >= 2) {
-            g.label = `${g.index}º FDS (${g.dates[0]} e ${g.dates[1]})`;
-            g.fullLabel = `${g.index}º Final de Semana (${g.dates[0]} e ${g.dates[1]})`;
-        } else {
-            g.label = `${g.index}º FDS (${g.dates[0]})`;
-            g.fullLabel = `${g.index}º Final de Semana (${g.dates[0]})`;
-        }
+        g.label = `${g.index}ª Sem (${g.startDate} a ${g.endDate})`;
+        g.fullLabel = `${g.index}ª Semana (${g.startDate} a ${g.endDate})`;
     });
     
     return { schedules, groups };
@@ -1090,15 +1104,18 @@ function renderPublicMassSummary(massList, personalServerId) {
             }
         });
 
+        const metaAco = getMetaAcolitos();
+        const metaCor = getMetaCoroinhas();
+        const metaTotal = metaAco + metaCor;
         const total = acolitoCount + coroinhaCount;
         const chip = document.createElement('div');
         chip.className = 'mass-summary-chip';
         chip.innerHTML = `
             <span class="chip-title">${mass.dia.substring(0,3)} ${mass.data} – ${mass.hora}</span>
             <div class="chip-counts">
-                <span class="chip-count-badge total">👥 ${total}</span>
-                <span class="chip-count-badge acolito">⛪ Ac: ${acolitoCount}</span>
-                <span class="chip-count-badge coroinha">✝️ Co: ${coroinhaCount}</span>
+                <span class="chip-count-badge total" title="Total inscrito / Meta">👥 ${total}/${metaTotal}</span>
+                <span class="chip-count-badge acolito" title="Acólitos inscritos / Meta">⛪ Ac: ${acolitoCount}/${metaAco}</span>
+                <span class="chip-count-badge coroinha" title="Coroinhas inscritos / Meta">✝️ Co: ${coroinhaCount}/${metaCor}</span>
             </div>
         `;
         container.appendChild(chip);
@@ -1580,10 +1597,17 @@ function renderQuemVaiServir() {
     const activeCoroinhasSet = new Set(coroinhaSlots.map(a => a.server_id));
     const totalCoroinhasRegistered = servers.filter(s => s.cargo === 'Coroinha').length;
 
+    const metaAco = getMetaAcolitos();
+    const metaCor = getMetaCoroinhas();
+    const metaTotal = metaAco + metaCor;
+
     let lowCoverageCount = 0;
     massSchedules.forEach(m => {
-        const count = monthAttendances.filter(a => a.mass_id === m.id).length;
-        if (count < 2) lowCoverageCount++;
+        const acolitosCount = monthAttendances.filter(a => a.mass_id === m.id && servers.some(s => s.id === a.server_id && s.cargo === 'Acólito')).length;
+        const coroinhasCount = monthAttendances.filter(a => a.mass_id === m.id && servers.some(s => s.id === a.server_id && s.cargo === 'Coroinha')).length;
+        if (acolitosCount < metaAco || (metaCor > 0 && coroinhasCount < metaCor)) {
+            lowCoverageCount++;
+        }
     });
 
     const kpiTotalActive = document.getElementById('kpi-qv-total-active');
@@ -1602,7 +1626,7 @@ function renderQuemVaiServir() {
     if (kpiCoroinhas) kpiCoroinhas.textContent = coroinhaSlots.length;
     if (kpiCoroinhasActive) kpiCoroinhasActive.textContent = `${activeCoroinhasSet.size} de ${totalCoroinhasRegistered} ativos`;
     if (kpiMassesCount) kpiMassesCount.textContent = massSchedules.length;
-    if (kpiNeedsAttention) kpiNeedsAttention.textContent = `${lowCoverageCount} com poucos servidores`;
+    if (kpiNeedsAttention) kpiNeedsAttention.textContent = `${lowCoverageCount} com poucos servidores (Meta: ${metaAco} Ac / ${metaCor} Co)`;
 
     // Renderizar Filtros de Fim de Semana
     if (weekendFilterContainer) {
@@ -1683,16 +1707,16 @@ function renderQuemVaiServir() {
 
             let coverageClass = 'is-well-covered';
             let badgeClass = 'good';
-            let badgeText = `✓ Coberta (${totalInMass})`;
+            let badgeText = `✓ Completa (${acolitos.length}/${metaAco} Acólitos, ${coroinhas.length}/${metaCor} Coroinhas)`;
 
             if (totalInMass === 0) {
                 coverageClass = 'is-empty-mass';
                 badgeClass = 'danger';
-                badgeText = '🚨 Sem Servidores';
-            } else if (totalInMass < 2) {
+                badgeText = `🚨 Sem Servidores (Meta: ${metaTotal})`;
+            } else if (acolitos.length < metaAco || (metaCor > 0 && coroinhas.length < metaCor)) {
                 coverageClass = 'is-low-coverage';
                 badgeClass = 'warning';
-                badgeText = `⚠️ Poucos Servidores (${totalInMass})`;
+                badgeText = `⚠️ Incompleta (${acolitos.length}/${metaAco} Ac, ${coroinhas.length}/${metaCor} Co)`;
             }
 
             const card = document.createElement('div');
@@ -1771,7 +1795,7 @@ function renderQuemVaiServir() {
                     ${qvRoleFilter !== 'Coroinha' ? `
                     <div class="coord-role-section">
                         <div class="coord-role-heading acolito">
-                            <span>⛪ Acólitos (${acolitos.length})</span>
+                            <span>⛪ Acólitos (${acolitos.length} de ${metaAco})</span>
                         </div>
                         <div class="coord-chips-list">
                             ${acolitosChipsHtml}
@@ -1781,7 +1805,7 @@ function renderQuemVaiServir() {
                     ${qvRoleFilter !== 'Acólito' ? `
                     <div class="coord-role-section">
                         <div class="coord-role-heading coroinha">
-                            <span>✝️ Coroinhas (${coroinhas.length})</span>
+                            <span>✝️ Coroinhas (${coroinhas.length} de ${metaCor})</span>
                         </div>
                         <div class="coord-chips-list">
                             ${coroinhasChipsHtml}
@@ -1870,6 +1894,7 @@ let serverFilterSearchTerm = '';
 let serverFilterRole = 'all';
 
 function setupServerManagement() {
+    syncMetaInputs();
     const formAddServer = document.getElementById('form-add-server');
     const filterInput = document.getElementById('filter-servers-list-input');
     const filterRoleSelect = document.getElementById('filter-servers-role-select');
@@ -2118,6 +2143,22 @@ window.alterarSenhaCoordenador = function() {
     localStorage.setItem('senha_coordenador', novaSenha);
     input.value = '';
     showToast(`Senha alterada com sucesso para "${novaSenha}"! 🔐`);
+};
+
+window.salvarMetasServidores = function() {
+    const inputAcolitos = document.getElementById('meta-acolitos');
+    const inputCoroinhas = document.getElementById('meta-coroinhas');
+    const valAco = parseInt(inputAcolitos ? inputAcolitos.value : '2', 10) || 1;
+    const valCor = parseInt(inputCoroinhas ? inputCoroinhas.value : '0', 10) || 0;
+    
+    localStorage.setItem('meta_acolitos_missa', valAco);
+    localStorage.setItem('meta_coroinhas_missa', valCor);
+    
+    showToast(`Configurado! Quantidade por missa: ${valAco} Acólitos e ${valCor} Coroinhas. 🎯`);
+    
+    renderQuemVaiServir();
+    renderMassesReport();
+    renderPublicScale();
 };
 
 window.confirmAllCurrentMass = async function() {
