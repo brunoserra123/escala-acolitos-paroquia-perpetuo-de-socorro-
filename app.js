@@ -9,14 +9,18 @@ function getSenhaCoordenador() {
     return localStorage.getItem('senha_coordenador') || SENHA_COORDENADOR_PADRAO;
 }
 
-// --- METAS DE QUANTIDADE DE SERVIDORES POR MISSA ---
+// --- METAS DE QUANTIDADE DE SERVIDORES POR MISSA (0 = Livre / Sem limite) ---
 function getMetaAcolitos() {
-    const val = parseInt(localStorage.getItem('meta_acolitos_missa') || '2', 10);
-    return isNaN(val) || val < 1 ? 2 : val;
+    const raw = localStorage.getItem('meta_acolitos_missa');
+    if (raw === null) return 2;
+    const val = parseInt(raw, 10);
+    return isNaN(val) || val < 0 ? 0 : val;
 }
 function getMetaCoroinhas() {
-    const val = parseInt(localStorage.getItem('meta_coroinhas_missa') || '2', 10);
-    return isNaN(val) || val < 0 ? 2 : val;
+    const raw = localStorage.getItem('meta_coroinhas_missa');
+    if (raw === null) return 2;
+    const val = parseInt(raw, 10);
+    return isNaN(val) || val < 0 ? 0 : val;
 }
 function getMetaTotal() {
     return getMetaAcolitos() + getMetaCoroinhas();
@@ -1601,14 +1605,20 @@ function renderQuemVaiServir() {
     const metaCor = getMetaCoroinhas();
     const metaTotal = metaAco + metaCor;
 
+    const isLivre = (metaAco === 0 && metaCor === 0);
+
     let lowCoverageCount = 0;
-    massSchedules.forEach(m => {
-        const acolitosCount = monthAttendances.filter(a => a.mass_id === m.id && servers.some(s => s.id === a.server_id && s.cargo === 'Acólito')).length;
-        const coroinhasCount = monthAttendances.filter(a => a.mass_id === m.id && servers.some(s => s.id === a.server_id && s.cargo === 'Coroinha')).length;
-        if (acolitosCount < metaAco || (metaCor > 0 && coroinhasCount < metaCor)) {
-            lowCoverageCount++;
-        }
-    });
+    if (!isLivre) {
+        massSchedules.forEach(m => {
+            const acolitosCount = monthAttendances.filter(a => a.mass_id === m.id && servers.some(s => s.id === a.server_id && s.cargo === 'Acólito')).length;
+            const coroinhasCount = monthAttendances.filter(a => a.mass_id === m.id && servers.some(s => s.id === a.server_id && s.cargo === 'Coroinha')).length;
+            const faltaAco = metaAco > 0 && acolitosCount < metaAco;
+            const faltaCor = metaCor > 0 && coroinhasCount < metaCor;
+            if (faltaAco || faltaCor) {
+                lowCoverageCount++;
+            }
+        });
+    }
 
     const kpiTotalActive = document.getElementById('kpi-qv-total-active');
     const kpiTotalReg = document.getElementById('kpi-qv-total-registered');
@@ -1626,7 +1636,13 @@ function renderQuemVaiServir() {
     if (kpiCoroinhas) kpiCoroinhas.textContent = coroinhaSlots.length;
     if (kpiCoroinhasActive) kpiCoroinhasActive.textContent = `${activeCoroinhasSet.size} de ${totalCoroinhasRegistered} ativos`;
     if (kpiMassesCount) kpiMassesCount.textContent = massSchedules.length;
-    if (kpiNeedsAttention) kpiNeedsAttention.textContent = `${lowCoverageCount} com poucos servidores (Meta: ${metaAco} Ac / ${metaCor} Co)`;
+    if (kpiNeedsAttention) {
+        if (isLivre) {
+            kpiNeedsAttention.textContent = "Modo Livre (sem limite de vagas)";
+        } else {
+            kpiNeedsAttention.textContent = `${lowCoverageCount} com poucos servidores (Meta: ${metaAco > 0 ? metaAco + ' Ac' : 'Ac livre'} / ${metaCor > 0 ? metaCor + ' Co' : 'Co livre'})`;
+        }
+    }
 
     // Renderizar Filtros de Fim de Semana
     if (weekendFilterContainer) {
@@ -1707,13 +1723,15 @@ function renderQuemVaiServir() {
 
             let coverageClass = 'is-well-covered';
             let badgeClass = 'good';
-            let badgeText = `✓ Completa (${acolitos.length}/${metaAco} Acólitos, ${coroinhas.length}/${metaCor} Coroinhas)`;
+            let badgeText = isLivre 
+                ? (totalInMass > 0 ? `✓ ${totalInMass} inscrito(s)` : 'Sem servidores')
+                : `✓ Completa (${acolitos.length}/${metaAco} Acólitos, ${coroinhas.length}/${metaCor} Coroinhas)`;
 
             if (totalInMass === 0) {
                 coverageClass = 'is-empty-mass';
-                badgeClass = 'danger';
-                badgeText = `🚨 Sem Servidores (Meta: ${metaTotal})`;
-            } else if (acolitos.length < metaAco || (metaCor > 0 && coroinhas.length < metaCor)) {
+                badgeClass = isLivre ? 'warning' : 'danger';
+                badgeText = isLivre ? '⚪ Sem Servidores' : `🚨 Sem Servidores (Meta: ${metaTotal})`;
+            } else if (!isLivre && ((metaAco > 0 && acolitos.length < metaAco) || (metaCor > 0 && coroinhas.length < metaCor))) {
                 coverageClass = 'is-low-coverage';
                 badgeClass = 'warning';
                 badgeText = `⚠️ Incompleta (${acolitos.length}/${metaAco} Ac, ${coroinhas.length}/${metaCor} Co)`;
@@ -2148,13 +2166,21 @@ window.alterarSenhaCoordenador = function() {
 window.salvarMetasServidores = function() {
     const inputAcolitos = document.getElementById('meta-acolitos');
     const inputCoroinhas = document.getElementById('meta-coroinhas');
-    const valAco = parseInt(inputAcolitos ? inputAcolitos.value : '2', 10) || 1;
-    const valCor = parseInt(inputCoroinhas ? inputCoroinhas.value : '0', 10) || 0;
+    const rawAco = inputAcolitos ? inputAcolitos.value.trim() : '0';
+    const rawCor = inputCoroinhas ? inputCoroinhas.value.trim() : '0';
+    const valAco = Math.max(0, parseInt(rawAco, 10) || 0);
+    const valCor = Math.max(0, parseInt(rawCor, 10) || 0);
     
     localStorage.setItem('meta_acolitos_missa', valAco);
     localStorage.setItem('meta_coroinhas_missa', valCor);
     
-    showToast(`Configurado! Quantidade por missa: ${valAco} Acólitos e ${valCor} Coroinhas. 🎯`);
+    if (valAco === 0 && valCor === 0) {
+        showToast("Modo LIVRE ativado: sem limites e sem metas de vagas! 🎉");
+    } else {
+        const txtAco = valAco > 0 ? `${valAco} Acólitos` : 'Acólitos livres';
+        const txtCor = valCor > 0 ? `${valCor} Coroinhas` : 'Coroinhas livres';
+        showToast(`Salvo! ${txtAco} e ${txtCor} por missa. 🎯`);
+    }
     
     renderQuemVaiServir();
     renderMassesReport();
