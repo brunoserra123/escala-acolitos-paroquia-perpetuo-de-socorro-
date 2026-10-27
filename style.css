@@ -4025,3 +4025,221 @@ img {
         padding: 8px;
     }
 }
+
+/* ==========================================================================
+   NOVO CALENDÁRIO MENSAL INTERATIVO (DIA A DIA)
+   ========================================================================== */
+.calendar-wrap {
+    width: 100%;
+    margin-top: 10px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+.calendar-weekdays-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.cal-weekday-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 0;
+}
+
+.cal-weekday-title.weekend {
+    color: var(--primary);
+    background: #eff6ff;
+    border-radius: 8px;
+}
+
+.calendar-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.calendar-day-empty {
+    background: #f8fafc;
+    border-radius: 12px;
+    min-height: 90px;
+    opacity: 0.35;
+    border: 1px dashed #e2e8f0;
+}
+
+.calendar-day-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 110px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.calendar-day-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.calendar-day-card.is-today {
+    border-color: #3b82f6;
+    background: #f0f7ff;
+}
+
+.calendar-day-card.has-ticked {
+    border-color: #22c55e;
+    background: #f0fdf4;
+}
+
+.cal-day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 4px;
+}
+
+.cal-day-number {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.cal-day-ticked-badge {
+    background: #22c55e;
+    color: white;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.cal-day-ticked-badge.hidden {
+    display: none !important;
+}
+
+.cal-day-masses {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.cal-mass-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #334155;
+    transition: all 0.15s ease;
+    user-select: none;
+    position: relative;
+}
+
+.cal-mass-chip:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+}
+
+.cal-mass-chip input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.cal-mass-chip.is-checked {
+    background: #16a34a !important;
+    border-color: #15803d !important;
+    color: #ffffff !important;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
+}
+
+.cal-mass-time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cal-mass-check-icon {
+    font-size: 0.8rem;
+    display: none;
+    font-weight: bold;
+}
+
+.cal-mass-chip.is-checked .cal-mass-check-icon {
+    display: inline;
+}
+
+.cal-mass-star {
+    font-size: 0.75rem;
+}
+
+/* Responsividade Mobile do Calendário */
+@media (max-width: 768px) {
+    .calendar-wrap {
+        padding: 8px;
+        overflow-x: auto;
+    }
+    .calendar-weekdays-row {
+        grid-template-columns: repeat(7, minmax(46px, 1fr));
+        gap: 3px;
+        margin-bottom: 6px;
+    }
+    .cal-weekday-title {
+        font-size: 0.7rem;
+        padding: 3px 0;
+    }
+    .calendar-days-grid {
+        grid-template-columns: repeat(7, minmax(46px, 1fr));
+        gap: 4px;
+    }
+    .calendar-day-empty {
+        min-height: 70px;
+    }
+    .calendar-day-card {
+        padding: 4px;
+        min-height: 80px;
+        gap: 3px;
+    }
+    .cal-day-number {
+        font-size: 0.82rem;
+    }
+    .cal-day-ticked-badge {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+    }
+    .cal-mass-chip {
+        padding: 4px 3px;
+        font-size: 0.68rem;
+        border-radius: 6px;
+        justify-content: center;
+    }
+    .cal-mass-star {
+        display: none;
+    }
+}

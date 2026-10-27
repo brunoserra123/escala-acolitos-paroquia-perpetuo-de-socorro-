@@ -680,6 +680,17 @@ window.marcarPorFiltro = function(prefix) {
             cb.checked = true;
             count++;
         }
+        const chip = cb.closest('.cal-mass-chip');
+        if (chip) chip.classList.toggle('is-checked', cb.checked);
+    });
+    document.querySelectorAll('.calendar-day-card').forEach(dayCard => {
+        const dayTicked = dayCard.querySelectorAll('input[name="mass"]:checked').length;
+        const badge = dayCard.querySelector('.cal-day-ticked-badge');
+        if (badge) {
+            badge.textContent = `✓ ${dayTicked}`;
+            badge.classList.toggle('hidden', dayTicked === 0);
+        }
+        dayCard.classList.toggle('has-ticked', dayTicked > 0);
     });
     updateMassDropdownSummary();
     updateSubmitButtonText();
@@ -689,6 +700,13 @@ window.marcarPorFiltro = function(prefix) {
 window.desmarcarTodasMissas = function() {
     document.querySelectorAll('input[name="mass"]').forEach(cb => {
         cb.checked = false;
+        const chip = cb.closest('.cal-mass-chip');
+        if (chip) chip.classList.remove('is-checked');
+    });
+    document.querySelectorAll('.calendar-day-card').forEach(dayCard => {
+        const badge = dayCard.querySelector('.cal-day-ticked-badge');
+        if (badge) badge.classList.add('hidden');
+        dayCard.classList.remove('has-ticked');
     });
     updateMassDropdownSummary();
     updateSubmitButtonText();
@@ -752,7 +770,7 @@ function setupQuickActions() {
     }
 }
 
-// Renderização das Opções de Missa (Agrupadas por Final de Semana)
+// Renderização das Opções de Missa (Calendário Mensal Interativo Dia a Dia)
 function renderMassOptions() {
     massOptions.innerHTML = '';
     
@@ -761,85 +779,108 @@ function renderMassOptions() {
         let serverMassIds = [];
         if (selectedServerId) {
             serverMassIds = attendanceData
-                .filter(a => a.server_id === selectedServerId)
+                .filter(a => a.server_id === selectedServerId && a.status !== 'deleted')
                 .map(a => a.mass_id);
         }
 
-        if (weekendGroups.length === 0) {
-            massOptions.innerHTML = '<p style="text-align:center; color:#7f8c8d; padding:20px;">Nenhuma data encontrada para este mês.</p>';
-            return;
+        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+        const firstDayWeekIndex = new Date(selectedYear, selectedMonth, 1).getDay(); // 0=Dom, 6=Sáb
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === selectedYear && today.getMonth() === selectedMonth;
+        const currentDayNum = isCurrentMonth ? today.getDate() : -1;
+
+        const calWrap = document.createElement('div');
+        calWrap.className = 'calendar-wrap';
+
+        // Cabeçalho dos dias da semana (Dom a Sáb)
+        const weekdaysRow = document.createElement('div');
+        weekdaysRow.className = 'calendar-weekdays-row';
+        const weekdayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        weekdayNames.forEach((w, idx) => {
+            const wCol = document.createElement('div');
+            wCol.className = `cal-weekday-title ${idx === 0 || idx === 6 ? 'weekend' : ''}`;
+            wCol.textContent = w;
+            weekdaysRow.appendChild(wCol);
+        });
+        calWrap.appendChild(weekdaysRow);
+
+        // Grade de dias do calendário
+        const daysGrid = document.createElement('div');
+        daysGrid.className = 'calendar-days-grid';
+
+        // Células vazias antes do dia 1
+        for (let i = 0; i < firstDayWeekIndex; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'calendar-day-empty';
+            daysGrid.appendChild(emptyCell);
         }
 
-        const dropdown = document.createElement('div');
-        dropdown.className = 'mass-dropdown';
-        dropdown.id = 'mass-dropdown';
-        dropdown.innerHTML = `
-            <button type="button" class="mass-dropdown-toggle" id="mass-dropdown-toggle" aria-haspopup="listbox" aria-expanded="true">
-                <span class="mass-dropdown-icon">📅</span>
-                <span class="mass-dropdown-summary" id="mass-dropdown-summary">Toque para marcar/desmarcar os dias e horários que você quer servir</span>
-                <span class="mass-dropdown-count hidden" id="mass-dropdown-count"></span>
-                <span class="mass-dropdown-chevron">▼</span>
-            </button>
-            <div class="mass-dropdown-panel" id="mass-dropdown-panel">
-                <div class="mass-dropdown-options"></div>
-            </div>
-        `;
-        massOptions.appendChild(dropdown);
+        // Células dos dias 1 até daysInMonth
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dd = String(day).padStart(2, '0');
+            const mm = String(selectedMonth + 1).padStart(2, '0');
+            const isoDate = `${selectedYear}-${mm}-${dd}`;
+            const dayMasses = massSchedules.filter(m => m.isoDate === isoDate);
 
-        const optionsWrap = dropdown.querySelector('.mass-dropdown-options');
+            const tickedInDay = dayMasses.filter(m => serverMassIds.includes(m.id)).length;
+            const isToday = day === currentDayNum;
 
-        weekendGroups.forEach(group => {
-            const g = document.createElement('div');
-            g.className = 'mass-dropdown-group';
+            const dayCard = document.createElement('div');
+            dayCard.className = `calendar-day-card ${isToday ? 'is-today' : ''} ${tickedInDay > 0 ? 'has-ticked' : ''}`;
 
-            const header = document.createElement('div');
-            header.className = 'mass-dropdown-group-header';
-            header.innerHTML = `
-                <span>📅 ${group.fullLabel}</span>
-                <span class="weekend-badge">${group.masses.length} missa${group.masses.length > 1 ? 's' : ''}</span>
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'cal-day-header';
+            dayHeader.innerHTML = `
+                <span class="cal-day-number">${day}</span>
+                <span class="cal-day-ticked-badge ${tickedInDay > 0 ? '' : 'hidden'}">✓ ${tickedInDay}</span>
             `;
-            g.appendChild(header);
+            dayCard.appendChild(dayHeader);
 
-            group.masses.forEach(m => {
+            const massesWrap = document.createElement('div');
+            massesWrap.className = 'cal-day-masses';
+
+            dayMasses.forEach(m => {
                 const isTicked = serverMassIds.includes(m.id);
-                const item = document.createElement('label');
-                item.className = 'mass-dropdown-item';
-                item.setAttribute('for', `check-${m.id}`);
-                item.innerHTML = `
+                const chip = document.createElement('label');
+                chip.className = `cal-mass-chip ${isTicked ? 'is-checked' : ''}`;
+                chip.setAttribute('for', `check-${m.id}`);
+                chip.title = m.obs ? `${m.hora} - ${m.obs}` : `${m.hora}`;
+                chip.innerHTML = `
                     <input type="checkbox" id="check-${m.id}" name="mass" value="${m.id}" ${isTicked ? 'checked' : ''}>
-                    <span class="tick-indicator">✓</span>
-                    <span class="mass-info-wrap" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
-                        <span class="mass-info-date" style="font-weight: 600;">${m.dia} (${m.data}) – <strong style="color: #2563eb; font-size: 0.95rem;">${m.hora}</strong></span>
-                        ${m.obs ? `<span style="font-size: 0.75rem; color: #d97706; font-weight: 600;">⭐ ${m.obs}</span>` : ''}
+                    <span class="cal-mass-time">
+                        <span class="cal-mass-check-icon">✓</span>
+                        ${m.hora}
                     </span>
+                    ${m.obs ? `<span class="cal-mass-star" title="${m.obs}">⭐</span>` : ''}
                 `;
-                g.appendChild(item);
+
+                chip.addEventListener('click', () => {
+                    setTimeout(() => {
+                        const cb = chip.querySelector('input[type="checkbox"]');
+                        if (cb) {
+                            chip.classList.toggle('is-checked', cb.checked);
+                            const dayTicked = dayCard.querySelectorAll('input[type="checkbox"]:checked').length;
+                            const badge = dayCard.querySelector('.cal-day-ticked-badge');
+                            if (badge) {
+                                badge.textContent = `✓ ${dayTicked}`;
+                                badge.classList.toggle('hidden', dayTicked === 0);
+                            }
+                            dayCard.classList.toggle('has-ticked', dayTicked > 0);
+                        }
+                        updateMassDropdownSummary();
+                        updateSubmitButtonText();
+                    }, 10);
+                });
+
+                massesWrap.appendChild(chip);
             });
 
-            optionsWrap.appendChild(g);
-        });
+            dayCard.appendChild(massesWrap);
+            daysGrid.appendChild(dayCard);
+        }
 
-        const toggleBtn = dropdown.querySelector('.mass-dropdown-toggle');
-        const panel = dropdown.querySelector('.mass-dropdown-panel');
-
-        toggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const willOpen = panel.classList.contains('hidden');
-            panel.classList.toggle('hidden', !willOpen);
-            toggleBtn.setAttribute('aria-expanded', String(willOpen));
-        });
-
-        const onDocClick = (e) => {
-            if (!document.contains(dropdown)) {
-                document.removeEventListener('click', onDocClick);
-                return;
-            }
-            if (!dropdown.contains(e.target)) {
-                panel.classList.add('hidden');
-                toggleBtn.setAttribute('aria-expanded', 'false');
-            }
-        };
-        document.addEventListener('click', onDocClick);
+        calWrap.appendChild(daysGrid);
+        massOptions.appendChild(calWrap);
 
         updateMassDropdownSummary();
         updateSubmitButtonText();
@@ -899,8 +940,13 @@ function updateTicksForSelectedServer() {
         
         document.querySelectorAll('input[name="mass"]').forEach(cb => {
             cb.checked = false;
-            const label = cb.closest('.mass-item')?.querySelector('.mass-label');
-            if (label) label.classList.remove('is-checked');
+            const chip = cb.closest('.cal-mass-chip');
+            if (chip) chip.classList.remove('is-checked');
+        });
+        document.querySelectorAll('.calendar-day-card').forEach(dayCard => {
+            const badge = dayCard.querySelector('.cal-day-ticked-badge');
+            if (badge) badge.classList.add('hidden');
+            dayCard.classList.remove('has-ticked');
         });
         updateSubmitButtonText();
         syncPersonalViewToServer(null);
@@ -920,11 +966,21 @@ function updateTicksForSelectedServer() {
     document.querySelectorAll('input[name="mass"]').forEach(cb => {
         const isTicked = registeredIds.includes(cb.value);
         cb.checked = isTicked;
-        const label = cb.closest('.mass-item')?.querySelector('.mass-label');
-        if (label) {
-            if (isTicked) label.classList.add('is-checked');
-            else label.classList.remove('is-checked');
+        const chip = cb.closest('.cal-mass-chip');
+        if (chip) {
+            chip.classList.toggle('is-checked', isTicked);
         }
+    });
+
+    // Atualiza os badges dos dias do calendário
+    document.querySelectorAll('.calendar-day-card').forEach(dayCard => {
+        const dayTicked = dayCard.querySelectorAll('input[name="mass"]:checked').length;
+        const badge = dayCard.querySelector('.cal-day-ticked-badge');
+        if (badge) {
+            badge.textContent = `✓ ${dayTicked}`;
+            badge.classList.toggle('hidden', dayTicked === 0);
+        }
+        dayCard.classList.toggle('has-ticked', dayTicked > 0);
     });
     
     const monthText = `${MONTH_NAMES[selectedMonth]} de ${selectedYear}`;
