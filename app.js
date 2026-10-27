@@ -258,10 +258,6 @@ async function fetchData() {
         const { data: sData, error: sErr } = await supabaseClient.from('servers').select('*');
         if (sErr) throw sErr;
         servers = sData || [];
-        // Lista de servidores carregada da base de dados catch (e) {
-                servers.push({ id: 22, nome: 'Davi', cargo: 'Coroinha' });
-            }
-        }
 
         const { data: aData, error: aErr } = await supabaseClient.from('attendance').select('*');
         if (aErr) throw aErr;
