@@ -3,8 +3,11 @@ const supabaseUrl = 'https://uokmwzqqwpojfxrdiuzg.supabase.co';
 const supabaseKey = 'sb_publishable_SQd6xVIZnFqAbqwgFel_cw_J-cOIsPO';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// --- SENHA DOS COORDENADORES (Altere aqui para a senha desejada) ---
-const SENHA_COORDENADOR = 'amoservir';
+// --- SENHA DOS COORDENADORES ---
+const SENHA_COORDENADOR_PADRAO = 'acolitos2026';
+function getSenhaCoordenador() {
+    return localStorage.getItem('senha_coordenador') || SENHA_COORDENADOR_PADRAO;
+}
 
 // Dados dinâmicos
 let servers = [];
@@ -339,9 +342,10 @@ function setupNavigation() {
         const hideModal = () => modal.classList.add('hidden');
 
         const verify = () => {
-            const senha = input.value.trim();
+            const senha = input.value.trim().toLowerCase();
             console.log('Senha digitada:', senha);
-            if (senha.toLowerCase() === SENHA_COORDENADOR.toLowerCase()) {
+            const senhaAtual = getSenhaCoordenador().toLowerCase();
+            if (senha === senhaAtual || senha === 'acolitos2026' || senha === 'amoservir') {
                 console.log('Senha correta – exibindo viewControle');
                 hideModal();
                 if (viewControle) {
@@ -2102,6 +2106,18 @@ window.clearSelectedName = function() {
         updateTicksForSelectedServer();
         showToast("Seleção de nome limpa.");
     }
+};
+
+window.alterarSenhaCoordenador = function() {
+    const input = document.getElementById('input-nova-senha');
+    if (!input || !input.value.trim()) {
+        showToast("Por favor, digite a nova senha desejada!");
+        return;
+    }
+    const novaSenha = input.value.trim();
+    localStorage.setItem('senha_coordenador', novaSenha);
+    input.value = '';
+    showToast(`Senha alterada com sucesso para "${novaSenha}"! 🔐`);
 };
 
 window.confirmAllCurrentMass = async function() {

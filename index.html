@@ -347,6 +347,22 @@
                     </form>
                 </div>
 
+                <!-- Alterar Senha da Coordenação -->
+                <div class="card" style="margin-top: 20px; border-left: 4px solid #2563eb;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <h4 style="margin: 0 0 4px 0; display: flex; align-items: center; gap: 8px;">🔐 Senha da Coordenação</h4>
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-light);">Altere a senha de acesso a este painel a qualquer momento.</p>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                            <input type="password" id="input-nova-senha" placeholder="Digite a nova senha..." style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem; min-width: 180px;">
+                            <button type="button" id="btn-salvar-nova-senha" onclick="alterarSenhaCoordenador()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem; width: auto;">
+                                Salvar Senha
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Lista de Servidores Cadastrados -->
                 <div class="stats-container" style="margin-top: 25px;">
                     <div class="servers-list-header">
@@ -463,6 +479,6 @@
     
     <!-- Cliente do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=7.0"></script>
+    <script src="app.js?v=8.0"></script>
 </body>
 </html>
