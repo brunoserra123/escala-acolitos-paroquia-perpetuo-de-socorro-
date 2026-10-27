@@ -257,11 +257,13 @@ async function fetchData() {
     try {
         const { data: sData, error: sErr } = await supabaseClient.from('servers').select('*');
         if (sErr) throw sErr;
-        servers = sData || [];
+        // Filtra servidores excluídos e nomes antigos
+        servers = (sData || []).filter(s => s && s.cargo !== 'deleted' && s.nome && !s.nome.startsWith('__deleted__'));
 
         const { data: aData, error: aErr } = await supabaseClient.from('attendance').select('*');
         if (aErr) throw aErr;
-        attendanceData = aData || [];
+        const validServerIds = servers.map(s => s.id);
+        attendanceData = (aData || []).filter(a => a && a.status !== 'deleted' && validServerIds.includes(a.server_id));
 
         const { data: mData, error: mErr } = await supabaseClient.from('special_masses').select('*').order('mass_date', { ascending: true });
         if (mErr) throw mErr;
@@ -2019,17 +2021,16 @@ window.deleteServer = async function(serverId) {
     if (!confirm(confirmMsg)) return;
 
     try {
-        // Remove marcações de presença primeiro
-        await supabaseClient.from('attendance').delete().eq('server_id', serverId);
-        attendanceData = attendanceData.filter(a => a.server_id !== serverId);
-
-        // Remove servidor
-        const { error } = await supabaseClient.from('servers').delete().eq('id', serverId);
-        if (error) {
-            console.warn("Aviso ao deletar servidor no Supabase:", error);
+        // Marca como deleted no Supabase (que aceita UPDATE com 200 OK)
+        try {
+            await supabaseClient.from('servers').update({ cargo: 'deleted', nome: `__deleted__${serverId}` }).eq('id', serverId);
+            await supabaseClient.from('attendance').update({ status: 'deleted' }).eq('server_id', serverId);
+        } catch (supaErr) {
+            console.warn("Aviso ao atualizar no Supabase:", supaErr);
         }
 
         servers = servers.filter(s => s.id !== serverId);
+        attendanceData = attendanceData.filter(a => a.server_id !== serverId);
         showToast(`${srv.cargo} "${srv.nome}" excluído com sucesso!`);
 
         renderServerSelect();
@@ -2064,8 +2065,8 @@ window.deleteAllServers = async function() {
     try {
         for (const s of [...servers]) {
             try {
-                await supabaseClient.from('attendance').delete().eq('server_id', s.id);
-                await supabaseClient.from('servers').delete().eq('id', s.id);
+                await supabaseClient.from('servers').update({ cargo: 'deleted', nome: `__deleted__${s.id}` }).eq('id', s.id);
+                await supabaseClient.from('attendance').update({ status: 'deleted' }).eq('server_id', s.id);
             } catch (e) {
                 console.warn("Erro ao deletar servidor id " + s.id, e);
             }
