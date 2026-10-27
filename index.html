@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coordenação Perpétuo de Socorro</title>
-    <link rel="stylesheet" href="style.css?v=6.1">
+    <link rel="stylesheet" href="style.css?v=7.0">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -102,13 +102,19 @@
 
                     <div class="mass-selection">
                         <div class="mass-selection-header">
-                            <label id="label-quais-missas">Quais missas você irá?</label>
-                            <!-- Ações Rápidas de Marcação -->
-                            <div id="mass-quick-actions" class="quick-actions-bar hidden">
-                                <button type="button" class="btn-quick danger" id="btn-quick-desmarcar" title="Desmarca todos os seus ticks">✕ Desmarcar Todos</button>
-                                <button type="button" class="btn-quick" id="btn-quick-sabados" title="Marca todos os sábados">✓ Sábados</button>
-                                <button type="button" class="btn-quick" id="btn-quick-dom-manha" title="Marca domingos pela manhã">✓ Dom. Manhã</button>
-                                <button type="button" class="btn-quick" id="btn-quick-dom-noite" title="Marca domingos à noite">✓ Dom. Noite</button>
+                            <label id="label-quais-missas" style="font-size: 1rem; font-weight: 700;">Quais missas você irá servir?</label>
+                            <p style="font-size: 0.82rem; color: var(--text-light); margin: 4px 0 8px 0;">Toque nos botões rápidos de horários ou marque diretamente na lista os dias e horários que você quer:</p>
+                            <!-- Ações Rápidas de Marcação por Horário -->
+                            <div id="mass-quick-actions" class="quick-actions-bar" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                                <button type="button" class="btn-quick" onclick="marcarPorFiltro('dom-1000')">✓ Dom. 10h (Crianças)</button>
+                                <button type="button" class="btn-quick" onclick="marcarPorFiltro('dom-1900')">✓ Dom. 19h</button>
+                                <button type="button" class="btn-quick" onclick="marcarPorFiltro('dom-0800')">✓ Dom. 08h</button>
+                                <button type="button" class="btn-quick" onclick="marcarPorFiltro('dom-1700')">✓ Dom. 17h</button>
+                                <button type="button" class="btn-quick" onclick="marcarPorFiltro('sab-1800')">✓ Sábados 18h</button>
+                                <button type="button" class="btn-quick" onclick="marcarPorFiltro('qua-1900')">✓ Quartas 19h (Novena)</button>
+                                <button type="button" class="btn-quick" onclick="marcarPorFiltro('qui-1700')">✓ Quintas 17h (Saúde)</button>
+                                <button type="button" class="btn-quick" onclick="marcarPorFiltro('dom-')">✓ Todos os Domingos</button>
+                                <button type="button" class="btn-quick danger" id="btn-quick-desmarcar" onclick="desmarcarTodasMissas()">✕ Desmarcar Todas</button>
                             </div>
                         </div>
 
@@ -502,6 +508,6 @@
     
     <!-- Cliente do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=10.0"></script>
+    <script src="app.js?v=12.0"></script>
 </body>
 </html>

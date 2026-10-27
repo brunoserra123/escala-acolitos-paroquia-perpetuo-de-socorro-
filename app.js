@@ -55,15 +55,70 @@ const MONTH_NAMES = [
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 
-// Grade Oficial da Paróquia Perpétuo de Socorro (Segunda a Domingo)
+// Grade Oficial da Paróquia Perpétuo de Socorro (Lago Sul - nspslagosul.com.br/horarios)
 const GRADE_PERPETUO_SOCORRO = {
-    0: { dia: 'Domingo', prefix: 'dom', horarios: ['08:00', '10:00', '12:00', '17:00', '19:00', '21:00'] },
-    1: { dia: 'Segunda-feira', prefix: 'seg', horarios: ['08:00', '19:00'] },
-    2: { dia: 'Terça-feira', prefix: 'ter', horarios: ['08:00', '19:00'] },
-    3: { dia: 'Quarta-feira', prefix: 'qua', horarios: ['08:00', '19:00'] }, // Novena Perpétua
-    4: { dia: 'Quinta-feira', prefix: 'qui', horarios: ['08:00', '17:00', '19:00'] }, // 17:00 Missa da Saúde
-    5: { dia: 'Sexta-feira', prefix: 'sex', horarios: ['08:00', '19:00'] },
-    6: { dia: 'Sábado', prefix: 'sab', horarios: ['08:00', '18:00'] }
+    0: { 
+        dia: 'Domingo', 
+        prefix: 'dom', 
+        horarios: [
+            { hora: '08:00', obs: '' },
+            { hora: '10:00', obs: 'Missa com as Crianças' },
+            { hora: '12:00', obs: '' },
+            { hora: '17:00', obs: '' },
+            { hora: '19:00', obs: '' },
+            { hora: '21:00', obs: '' }
+        ] 
+    },
+    1: { 
+        dia: 'Segunda-feira', 
+        prefix: 'seg', 
+        horarios: [
+            { hora: '08:00', obs: '' },
+            { hora: '19:00', obs: '' }
+        ] 
+    },
+    2: { 
+        dia: 'Terça-feira', 
+        prefix: 'ter', 
+        horarios: [
+            { hora: '08:00', obs: '' },
+            { hora: '19:00', obs: '' }
+        ] 
+    },
+    3: { 
+        dia: 'Quarta-feira', 
+        prefix: 'qua', 
+        horarios: [
+            { hora: '08:00', obs: '' },
+            { hora: '17:00', obs: '' },
+            { hora: '19:00', obs: 'Novena Perpétua' }
+        ] 
+    },
+    4: { 
+        dia: 'Quinta-feira', 
+        prefix: 'qui', 
+        horarios: [
+            { hora: '08:00', obs: '' },
+            { hora: '17:00', obs: 'Missa da Saúde' },
+            { hora: '19:00', obs: '' }
+        ] 
+    },
+    5: { 
+        dia: 'Sexta-feira', 
+        prefix: 'sex', 
+        horarios: [
+            { hora: '08:00', obs: '' },
+            { hora: '19:00', obs: '' }
+        ] 
+    },
+    6: { 
+        dia: 'Sábado', 
+        prefix: 'sab', 
+        horarios: [
+            { hora: '08:00', obs: '' },
+            { hora: '18:00', obs: '' }
+        ] 
+    }
 };
 
 // Cálculo e Geração das Missas do Mês
@@ -105,13 +160,16 @@ function calculateMonthMassSchedules(year, month) {
         
         const info = GRADE_PERPETUO_SOCORRO[dayOfWeek];
         if (info && info.horarios) {
-            info.horarios.forEach(hora => {
+            info.horarios.forEach(hObj => {
+                const hora = hObj.hora;
+                const obs = hObj.obs || '';
                 const horaClean = hora.replace(':', '');
                 const mass = {
                     id: `${info.prefix}-${horaClean}-${isoDate}`,
                     dia: info.dia,
                     data: dateFormatted,
                     hora: hora,
+                    obs: obs,
                     isoDate: isoDate,
                     dayOfWeek: dayOfWeek,
                     weekendIndex: weekCount
@@ -615,6 +673,28 @@ function renderSpecialMassSelect() {
     };
 }
 
+window.marcarPorFiltro = function(prefix) {
+    let count = 0;
+    document.querySelectorAll('input[name="mass"]').forEach(cb => {
+        if (cb.value.startsWith(prefix) || cb.value.includes(prefix)) {
+            cb.checked = true;
+            count++;
+        }
+    });
+    updateMassDropdownSummary();
+    updateSubmitButtonText();
+    showToast(`${count} missa(s) marcada(s)! Toque em "Salvar" abaixo.`);
+};
+
+window.desmarcarTodasMissas = function() {
+    document.querySelectorAll('input[name="mass"]').forEach(cb => {
+        cb.checked = false;
+    });
+    updateMassDropdownSummary();
+    updateSubmitButtonText();
+    showToast("Todas as missas foram desmarcadas!");
+};
+
 // Configuração dos Botões de Ação Rápida (Shortcuts)
 function setupQuickActions() {
     if (btnQuickDesmarcar) {
@@ -694,13 +774,13 @@ function renderMassOptions() {
         dropdown.className = 'mass-dropdown';
         dropdown.id = 'mass-dropdown';
         dropdown.innerHTML = `
-            <button type="button" class="mass-dropdown-toggle" id="mass-dropdown-toggle" aria-haspopup="listbox" aria-expanded="false">
+            <button type="button" class="mass-dropdown-toggle" id="mass-dropdown-toggle" aria-haspopup="listbox" aria-expanded="true">
                 <span class="mass-dropdown-icon">📅</span>
-                <span class="mass-dropdown-summary" id="mass-dropdown-summary">Selecione as missas, datas e horários que deseja servir...</span>
+                <span class="mass-dropdown-summary" id="mass-dropdown-summary">Toque para marcar/desmarcar os dias e horários que você quer servir</span>
                 <span class="mass-dropdown-count hidden" id="mass-dropdown-count"></span>
                 <span class="mass-dropdown-chevron">▼</span>
             </button>
-            <div class="mass-dropdown-panel hidden" id="mass-dropdown-panel">
+            <div class="mass-dropdown-panel" id="mass-dropdown-panel">
                 <div class="mass-dropdown-options"></div>
             </div>
         `;
@@ -728,9 +808,9 @@ function renderMassOptions() {
                 item.innerHTML = `
                     <input type="checkbox" id="check-${m.id}" name="mass" value="${m.id}" ${isTicked ? 'checked' : ''}>
                     <span class="tick-indicator">✓</span>
-                    <span class="mass-info-wrap">
-                        <span class="mass-info-date">${m.dia} (${m.data})</span>
-                        <span class="mass-info-time">${m.hora}</span>
+                    <span class="mass-info-wrap" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
+                        <span class="mass-info-date" style="font-weight: 600;">${m.dia} (${m.data}) – <strong style="color: #2563eb; font-size: 0.95rem;">${m.hora}</strong></span>
+                        ${m.obs ? `<span style="font-size: 0.75rem; color: #d97706; font-weight: 600;">⭐ ${m.obs}</span>` : ''}
                     </span>
                 `;
                 g.appendChild(item);
@@ -980,8 +1060,15 @@ formEscala.addEventListener('submit', async (e) => {
 
     try {
         if (currentMode === 'month' || currentMode === 'weekend') {
-            // Remove todas as marcações deste servidor no mês atual
-            await supabaseClient.from('attendance').delete().eq('server_id', serverId).in('mass_id', monthMassIds);
+            // Remove/invalida todas as marcações anteriores deste servidor no mês atual
+            try {
+                await supabaseClient.from('attendance')
+                    .update({ status: 'deleted' })
+                    .eq('server_id', serverId)
+                    .in('mass_id', monthMassIds);
+            } catch (errDel) {
+                console.warn("Aviso ao limpar attendance antiga:", errDel);
+            }
             attendanceData = attendanceData.filter(item => item.server_id != serverId || !monthMassIds.includes(item.mass_id));
             
             if (selectedEntries.length > 0) {
@@ -995,7 +1082,14 @@ formEscala.addEventListener('submit', async (e) => {
         } else {
             // Missa Especial
             const mId = `special-${currentSpecialMassId}`;
-            await supabaseClient.from('attendance').delete().eq('server_id', serverId).eq('mass_id', mId);
+            try {
+                await supabaseClient.from('attendance')
+                    .update({ status: 'deleted' })
+                    .eq('server_id', serverId)
+                    .eq('mass_id', mId);
+            } catch (errDel) {
+                console.warn("Aviso ao limpar missa especial:", errDel);
+            }
             attendanceData = attendanceData.filter(item => item.server_id != serverId || item.mass_id != mId);
             
             const { data, error } = await supabaseClient.from('attendance').insert(selectedEntries).select();
