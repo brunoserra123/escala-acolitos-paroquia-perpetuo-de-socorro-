@@ -333,6 +333,42 @@ p.form-subtitle {
     box-shadow: 0 2px 8px rgba(26, 35, 126, 0.25);
 }
 
+#main-nav #btn-force-reload {
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    background: rgba(26, 35, 126, 0.08);
+    border: 1px dashed rgba(26, 35, 126, 0.35);
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 20px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+
+#main-nav #btn-force-reload:hover {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+#main-nav #btn-force-reload:active {
+    transform: scale(0.95);
+}
+
+@keyframes spin-sync {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.rotating {
+    animation: spin-sync 0.8s linear infinite;
+}
+
 /* Cartões de Conteúdo */
 .card {
     background: var(--card-bg);
