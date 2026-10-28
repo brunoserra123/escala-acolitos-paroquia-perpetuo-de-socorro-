@@ -1517,26 +1517,27 @@ select:focus {
 .scale-server-filter-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin: 6px 0 4px 0;
+    gap: 10px;
+    margin: 8px 0;
     flex-wrap: wrap;
 }
 
 .scale-server-filter-row label {
-    font-size: 0.82rem;
+    font-size: 0.88rem;
     font-weight: 700;
     color: var(--primary);
     margin: 0;
     white-space: nowrap;
 }
 
+#scale-server-filter-select,
 .scale-server-filter-select {
     flex: 1;
-    min-width: 200px;
-    max-width: 340px;
-    padding: 9px 12px;
-    font-size: 16px;
-    border: 1px solid #dcdfe6;
+    min-width: 220px;
+    max-width: 360px;
+    padding: 9px 14px;
+    font-size: 0.95rem;
+    border: 1.5px solid #cbd5e1;
     border-radius: 10px;
     background: #fff;
     color: var(--text);
@@ -1546,16 +1547,46 @@ select:focus {
     appearance: auto;
 }
 
+#scale-server-filter-select:focus,
 .scale-server-filter-select:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.12);
 }
 
-.public-scale-hint {
+.btn-clear-filter {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
     font-size: 0.82rem;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-clear-filter:hover {
+    background: #e2e8f0;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.public-scale-hint {
+    font-size: 0.84rem;
     color: var(--text-light);
-    margin: 4px 0 10px 0;
+    margin: 10px 0 12px 0;
+    line-height: 1.45;
+    display: block;
+    clear: both;
+}
+
+.scale-filter-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 14px 0;
+    clear: both;
 }
 
 /* ===== Visão em cards (celular e visão pessoal) ===== */

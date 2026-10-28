@@ -23,7 +23,7 @@
     <link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
 
-    <link rel="stylesheet" href="style.css?v=12.0">
+    <link rel="stylesheet" href="style.css?v=13.0">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -169,14 +169,15 @@
                     <!-- Dropdown: cada acólito/coroinha escolhe seu nome para ver a própria escala -->
                     <div class="scale-server-filter-row">
                         <label for="scale-server-filter-select">👤 Ver escala de:</label>
-                        <select id="scale-server-filter-select">
+                        <select id="scale-server-filter-select" class="scale-server-filter-select">
                             <option value="all">Todos os servidores</option>
                         </select>
+                        <button type="button" id="btn-clear-scale-filter" class="btn-clear-filter hidden" onclick="clearScaleServerFilter()">✕ Ver todos</button>
                     </div>
 
-                    <p class="public-scale-hint">💡 Escolha um nome no menu acima para ver apenas as missas e horários daquela pessoa. No celular, a escala aparece em cartões fáceis de ler.</p>
+                    <p class="public-scale-hint" id="public-scale-hint">💡 Escolha seu nome no menu acima para ver apenas as suas missas marcadas.</p>
                     <div id="scale-filter-container" class="scale-filter-container">
-                        <!-- Botões de filtro por final de semana -->
+                        <!-- Filtros carregados via JS -->
                     </div>
 
                     <!-- Resumo Rápido de Quantidades por Missa para Todos -->
@@ -577,6 +578,6 @@
     
     <!-- Cliente do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=16.0"></script>
+    <script src="app.js?v=17.0"></script>
 </body>
 </html>

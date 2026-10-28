@@ -1177,33 +1177,37 @@ formEscala.addEventListener('submit', async (e) => {
     }
 });
 
-// Renderização dos Filtros da Tabela Pública
+// Renderização dos Filtros da Tabela Pública (Filtros simples e autoexplicativos)
 function renderScaleFilters() {
     if (!scaleFilterContainer) return;
     scaleFilterContainer.innerHTML = '';
     
-    const btnAll = document.createElement('button');
-    btnAll.type = 'button';
-    btnAll.className = `btn-filter ${currentScaleFilter === 'all' ? 'active' : ''}`;
-    btnAll.textContent = `Todo o Mês (${massSchedules.length})`;
-    btnAll.onclick = () => {
-        currentScaleFilter = 'all';
-        renderPublicScale();
-    };
-    scaleFilterContainer.appendChild(btnAll);
-    
-    weekendGroups.forEach(g => {
+    const filters = [
+        { id: 'all', label: '📅 Todas as Missas' },
+        { id: 'weekend', label: '⛪ Finais de Semana (Sáb/Dom)' },
+        { id: 'weekday', label: '🕯️ Dias de Semana' },
+        { id: 'special', label: '⭐ Novenas e Solenes' }
+    ];
+
+    filters.forEach(f => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `btn-filter ${currentScaleFilter == g.index ? 'active' : ''}`;
-        btn.textContent = g.label;
+        btn.className = `btn-filter ${currentScaleFilter === f.id ? 'active' : ''}`;
+        btn.textContent = f.label;
         btn.onclick = () => {
-            currentScaleFilter = g.index;
+            currentScaleFilter = f.id;
             renderPublicScale();
         };
         scaleFilterContainer.appendChild(btn);
     });
 }
+
+// Botão para limpar a filtragem individual e voltar a ver todos
+window.clearScaleServerFilter = function() {
+    scaleServerFilter = 'all';
+    if (scaleServerFilterSelect) scaleServerFilterSelect.value = 'all';
+    renderPublicScale();
+};
 
 // Renderização do Resumo Público de Quantidade por Missa
 // Se personalServerId for informado, mostra apenas as missas daquele servidor com seu status
@@ -1290,6 +1294,9 @@ function renderPublicScale() {
 
     var sortedServers = [...servers].sort(function(a,b){ return a.nome.localeCompare(b.nome); });
 
+    const btnClearFilter = document.getElementById('btn-clear-scale-filter');
+    const hintEl = document.getElementById('public-scale-hint');
+
     // Visualização pessoal: só o servidor escolhido no dropdown
     var personalServerId = null;
     if (scaleServerFilter && scaleServerFilter !== 'all') {
@@ -1297,16 +1304,54 @@ function renderPublicScale() {
         sortedServers = sortedServers.filter(s => s.id == scaleServerFilter);
     }
 
+    // Se estiver filtrando um servidor individual:
+    if (personalServerId) {
+        // Esconde botões de semana e texto redundante para não poluir
+        if (scaleFilterContainer) scaleFilterContainer.style.display = 'none';
+        if (hintEl) hintEl.style.display = 'none';
+        if (btnClearFilter) btnClearFilter.classList.remove('hidden');
+
+        const serverObj = servers.find(s => s.id == personalServerId);
+        if (publicScaleTitle && serverObj) {
+            publicScaleTitle.textContent = `Minhas Missas Marcadas (${serverObj.nome})`;
+        }
+
+        const summaryEl = document.getElementById('public-mass-summary');
+        if (summaryEl) summaryEl.innerHTML = '';
+
+        // Exibe todas as missas do mês do servidor
+        renderPersonalScaleCards(massSchedules, personalServerId);
+        return;
+    }
+
+    // Modo Geral: exibe filtros limpos e dica amigável
+    if (scaleFilterContainer) scaleFilterContainer.style.display = 'flex';
+    if (hintEl) {
+        hintEl.style.display = 'block';
+        hintEl.textContent = '💡 Dica: Escolha seu nome no menu acima para ver apenas as suas missas marcadas.';
+    }
+    if (btnClearFilter) btnClearFilter.classList.add('hidden');
+    if (publicScaleTitle) {
+        publicScaleTitle.textContent = 'Agenda Geral da Paróquia';
+    }
+
+    renderScaleFilters();
+
     var massList = [];
     if (currentMode === 'month' || currentMode === 'weekend') {
-        renderScaleFilters();
         if (currentScaleFilter === 'all') {
             massList = massSchedules;
+        } else if (currentScaleFilter === 'weekend') {
+            massList = massSchedules.filter(m => m.dayOfWeek === 0 || m.dayOfWeek === 6);
+        } else if (currentScaleFilter === 'weekday') {
+            massList = massSchedules.filter(m => m.dayOfWeek >= 1 && m.dayOfWeek <= 5);
+        } else if (currentScaleFilter === 'special') {
+            massList = massSchedules.filter(m => m.obs && m.obs.trim() !== '');
         } else {
-            massList = massSchedules.filter(function(m){ return m.weekendIndex == currentScaleFilter; });
+            massList = massSchedules;
         }
     } else {
-        if (scaleFilterContainer) scaleFilterContainer.innerHTML = '';
+        if (scaleFilterContainer) scaleFilterContainer.style.display = 'none';
         if (!currentSpecialMassId) {
             publicScaleList.innerHTML = '<p style="text-align:center;padding:20px;color:#7f8c8d;">Selecione uma missa especial para ver a agenda.</p>';
             return;
@@ -1324,16 +1369,8 @@ function renderPublicScale() {
     }
 
     if (massList.length === 0) {
-        publicScaleList.innerHTML = '<p style="text-align:center;padding:20px;color:#7f8c8d;">Nenhuma missa encontrada para este periodo.</p>';
-        renderPublicMassSummary([], personalServerId);
-        return;
-    }
-
-    // Visão pessoal: lista limpa com as missas e horários da pessoa
-    if (personalServerId) {
-        const summaryEl = document.getElementById('public-mass-summary');
-        if (summaryEl) summaryEl.innerHTML = ''; // os cards já mostram o status
-        renderPersonalScaleCards(massList, personalServerId);
+        publicScaleList.innerHTML = '<p style="text-align:center;padding:20px;color:#7f8c8d;">Nenhuma missa encontrada para este filtro.</p>';
+        renderPublicMassSummary([], null);
         return;
     }
 
@@ -1346,18 +1383,17 @@ function renderPublicScale() {
     }
 
     if (currentMode !== 'month' && currentMode !== 'weekend') {
-        renderWeekendSection(publicScaleList, massList, sortedServers, attendanceMap, null, personalServerId);
+        renderWeekendSection(publicScaleList, massList, sortedServers, attendanceMap, null, null);
         return;
     }
 
     if (currentScaleFilter !== 'all') {
-        var group = weekendGroups.find(function(g){ return g.index == currentScaleFilter; });
-        renderWeekendSection(publicScaleList, massList, sortedServers, attendanceMap, group, personalServerId);
+        renderWeekendSection(publicScaleList, massList, sortedServers, attendanceMap, null, null);
     } else {
         weekendGroups.forEach(function(group) {
             var groupMasses = massList.filter(function(m){ return m.weekendIndex === group.index; });
             if (groupMasses.length === 0) return;
-            renderWeekendSection(publicScaleList, groupMasses, sortedServers, attendanceMap, group, personalServerId);
+            renderWeekendSection(publicScaleList, groupMasses, sortedServers, attendanceMap, group, null);
         });
     }
 }
@@ -1384,6 +1420,7 @@ function renderPersonalScaleCards(massList, personalServerId) {
             <div>
                 <h4>${server.nome}</h4>
                 <span class="badge ${roleClass}">${roleIcon} ${server.cargo}</span>
+                <span style="font-size:0.82rem;font-weight:600;color:var(--primary);margin-left:8px;">• ${myMasses.length} ${myMasses.length === 1 ? 'missa marcada' : 'missas marcadas'}</span>
             </div>
         </div>
         <button type="button" class="btn-quick" id="personal-edit-btn">✏️ Alterar escala</button>
@@ -1396,7 +1433,7 @@ function renderPersonalScaleCards(massList, personalServerId) {
     if (myMasses.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'personal-scale-empty';
-        empty.textContent = 'Nenhuma missa marcada neste período. Toque em "Alterar escala" para marcar seus dias.';
+        empty.textContent = 'Você ainda não marcou presença em nenhuma missa para este mês. Toque no calendário acima para escolher seus horários e depois clique em Salvar.';
         publicScaleList.appendChild(empty);
         return;
     }
@@ -3056,7 +3093,7 @@ function showToast(msg) {
 // =========================================================================
 // SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA & CACHE-BUSTER EM TEMPO REAL
 // =========================================================================
-const APP_CURRENT_VERSION = "1.3.0";
+const APP_CURRENT_VERSION = "1.4.0";
 let isCheckingUpdate = false;
 
 // =========================================================================
