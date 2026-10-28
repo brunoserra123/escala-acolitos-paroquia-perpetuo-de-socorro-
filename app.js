@@ -3056,8 +3056,54 @@ function showToast(msg) {
 // =========================================================================
 // SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA & CACHE-BUSTER EM TEMPO REAL
 // =========================================================================
-const APP_CURRENT_VERSION = "1.2.0";
+const APP_CURRENT_VERSION = "1.3.0";
 let isCheckingUpdate = false;
+
+// =========================================================================
+// PWA (PROGRESSIVE WEB APP) & INSTALAÇÃO NA TELA INICIAL (ANDROID & IPHONE)
+// =========================================================================
+let deferredInstallPrompt = null;
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js?v=1.3.0')
+            .then(reg => {
+                console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
+            })
+            .catch(err => {
+                console.log('[PWA] Service Worker não ativado:', err);
+            });
+    });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const pwaCard = document.getElementById('install-pwa-card');
+    if (pwaCard) pwaCard.style.display = 'flex';
+});
+
+window.openPwaInstallModal = function() {
+    if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                showToast("🎉 Adicionado à tela inicial com sucesso!");
+                const pwaCard = document.getElementById('install-pwa-card');
+                if (pwaCard) pwaCard.style.display = 'none';
+            }
+            deferredInstallPrompt = null;
+        });
+        return;
+    }
+    const modal = document.getElementById('modal-pwa-install');
+    if (modal) modal.classList.remove('hidden');
+};
+
+window.closePwaInstallModal = function() {
+    const modal = document.getElementById('modal-pwa-install');
+    if (modal) modal.classList.add('hidden');
+};
 
 async function clearAppCaches() {
     try {

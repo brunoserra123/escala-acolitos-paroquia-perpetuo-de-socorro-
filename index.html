@@ -6,8 +6,24 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Coordenação Perpétuo de Socorro</title>
-    <link rel="stylesheet" href="style.css?v=11.0">
+    <title>Escala Perpétuo Socorro</title>
+
+    <!-- Favicon para a aba do navegador -->
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png?v=3">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=3">
+    <link rel="shortcut icon" href="favicon.ico?v=3">
+
+    <!-- Configurações para Fixar na Tela Inicial (Android & iPhone PWA) -->
+    <link rel="manifest" href="manifest.json?v=3">
+    <meta name="theme-color" content="#1a237e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Escala Socorro">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=3">
+
+    <link rel="stylesheet" href="style.css?v=12.0">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -16,7 +32,9 @@
             <img src="church_banner.jpg" alt="Paróquia Perpétuo de Socorro" class="modern-banner">
             <div class="banner-overlay"></div>
             <div class="logo-container">
+                <img src="icon-192.png" alt="Ícone Escala de Acólitos" class="header-app-icon">
                 <h1>Paróquia Perpétuo de Socorro</h1>
+                <p class="header-subtitle">Escala de Acólitos e Coroinhas • Servir com alegria</p>
             </div>
         </div>
         <nav id="main-nav">
@@ -46,6 +64,16 @@
                             <p>Datas comemorativas e eventos extras</p>
                         </div>
                     </button>
+                </div>
+
+                <!-- Banner PWA para Fixar na Tela Inicial do Celular -->
+                <div class="install-pwa-card" id="install-pwa-card" onclick="openPwaInstallModal()">
+                    <img src="icon-192.png" alt="Ícone Escala de Acólitos" class="install-pwa-icon">
+                    <div class="install-pwa-info">
+                        <strong>📲 Fixar na Tela Inicial (Android / iPhone)</strong>
+                        <span>Abra o app direto pelo ícone no celular, sem precisar digitar o link!</span>
+                    </div>
+                    <button type="button" class="btn-install-pwa" onclick="event.stopPropagation(); openPwaInstallModal();">Instalar</button>
                 </div>
             </div>
         </section>
@@ -503,6 +531,43 @@
         </div>
     </div>
 
+    <!-- Modal de Instruções para Fixar na Tela Inicial (Android / iPhone) -->
+    <div id="modal-pwa-install" class="modal-overlay hidden" onclick="if(event.target === this) closePwaInstallModal()">
+        <div class="modal-card modal-pwa-card">
+            <div class="modal-pwa-header">
+                <img src="icon-192.png" alt="Ícone App" class="modal-pwa-icon">
+                <div>
+                    <h3>📱 Fixar na Tela Inicial</h3>
+                    <p style="color: var(--text-light); font-size: 0.85rem; margin-top: 2px;">Tenha a Escala de Acólitos como um aplicativo no seu celular!</p>
+                </div>
+            </div>
+
+            <div class="pwa-instructions">
+                <div class="pwa-platform">
+                    <h4>🍎 No iPhone / iPad (Safari):</h4>
+                    <ol>
+                        <li>Toque no botão de <strong>Compartilhar</strong> (ícone com seta apontando para cima <strong><span style="font-size: 1.1rem;">📤</span></strong> na barra do Safari).</li>
+                        <li>Role a lista de opções para baixo e toque em <strong>"Adicionar à Tela de Início"</strong> (ícone <strong>➕</strong>).</li>
+                        <li>Toque em <strong>"Adicionar"</strong> no canto superior direito. Pronto!</li>
+                    </ol>
+                </div>
+
+                <div class="pwa-platform" style="margin-top: 14px;">
+                    <h4>🤖 No Android (Chrome):</h4>
+                    <ol>
+                        <li>Toque no menu de <strong>3 pontinhos (⋮)</strong> no canto superior direito do Chrome.</li>
+                        <li>Toque na opção <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong> 📲.</li>
+                        <li>Confirme em <strong>"Instalar"</strong>. O ícone aparecerá junto aos seus outros apps!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button type="button" class="modal-btn confirm" onclick="closePwaInstallModal()" style="width: 100%;">Entendi!</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="toast hidden">Mensagem aqui</div>
 
     <!-- Bibliotecas Externas -->
@@ -512,6 +577,6 @@
     
     <!-- Cliente do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=15.0"></script>
+    <script src="app.js?v=16.0"></script>
 </body>
 </html>
