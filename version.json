@@ -1,5 +1,5 @@
 {
-  "version": "1.5.0",
-  "updated_at": "2026-10-29T11:50:00Z",
-  "description": "Visualizacao simplificada semana a semana com atalho de 19h e facilidade para ajustar imprevistos"
+  "version": "1.5.1",
+  "updated_at": "2026-10-29T13:20:00Z",
+  "description": "Adicionado modal com mensagem final de sucesso ao salvar escala"
 }

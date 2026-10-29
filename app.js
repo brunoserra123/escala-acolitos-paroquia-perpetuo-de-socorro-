@@ -1148,8 +1148,69 @@ formEscala.addEventListener('submit', async (e) => {
                 if (error) throw error;
                 if (data) attendanceData.push(...data);
                 showToast(`Escala de ${serverName} atualizada! ${selectedEntries.length} missa(s) marcada(s) para ${monthText} ⛪`);
+                
+                // Monta chips das missas escolhidas para a mensagem final de sucesso
+                const chosenMasses = massSchedules.filter(m => {
+                    const cb = document.getElementById(`mass-${m.id}`);
+                    return cb && cb.checked;
+                });
+                
+                const chipsHtml = chosenMasses.map(m => {
+                    return `<span class="modal-success-chip">📅 ${m.data} às ${m.hora}</span>`;
+                }).join('');
+
+                openSuccessModal({
+                    badge: '🎉',
+                    title: 'Escala Salva com Sucesso!',
+                    message: `Parabéns! Suas missas para ${monthText} foram confirmadas e salvas com sucesso no sistema da Paróquia.`,
+                    detailsHtml: `
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">👤 Nome:</span>
+                            <span class="modal-success-row-val">${serverName}</span>
+                        </div>
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">📅 Mês:</span>
+                            <span class="modal-success-row-val">${monthText}</span>
+                        </div>
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">⛪ Missas marcadas:</span>
+                            <span class="modal-success-row-val" style="color:#059669; font-weight:800;">${selectedEntries.length} missa(s)</span>
+                        </div>
+                        ${chipsHtml ? `<div style="margin-top:10px; font-size:0.8rem; font-weight:700; color:#475569;">Horários confirmados:</div><div class="modal-success-chips">${chipsHtml}</div>` : ''}
+                    `,
+                    btnText: '✅ Perfeito! Ver Minha Escala',
+                    onClose: () => {
+                        if (scaleServerFilterSelect) {
+                            scaleServerFilterSelect.value = serverId;
+                            scaleServerFilter = serverId;
+                            renderPublicScale();
+                        }
+                        const sec = document.querySelector('.public-scale') || document.getElementById('public-scale-list');
+                        if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
             } else {
                 showToast(`Todas as suas missas de ${monthText} foram desmarcadas com sucesso! 👍`);
+                openSuccessModal({
+                    badge: '👍',
+                    title: 'Missas Desmarcadas!',
+                    message: `Todas as suas marcações para ${monthText} foram desmarcadas com sucesso.`,
+                    detailsHtml: `
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">👤 Nome:</span>
+                            <span class="modal-success-row-val">${serverName}</span>
+                        </div>
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">📅 Mês:</span>
+                            <span class="modal-success-row-val">${monthText}</span>
+                        </div>
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">Status:</span>
+                            <span class="modal-success-row-val" style="color:#64748b;">Nenhuma missa selecionada</span>
+                        </div>
+                    `,
+                    btnText: 'OK, Entendido'
+                });
             }
         } else {
             // Missa Especial
@@ -1173,8 +1234,40 @@ formEscala.addEventListener('submit', async (e) => {
             const status = document.querySelector('input[name="special-status"]:checked').value;
             if (status === 'present') {
                 showToast(`Você foi cadastrado como presente na ${massName}! 🌟`);
+                openSuccessModal({
+                    badge: '🌟',
+                    title: 'Presença Confirmada!',
+                    message: `Sua presença na celebração foi registrada com sucesso!`,
+                    detailsHtml: `
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">👤 Nome:</span>
+                            <span class="modal-success-row-val">${serverName}</span>
+                        </div>
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">⛪ Celebração:</span>
+                            <span class="modal-success-row-val">${massName}</span>
+                        </div>
+                    `,
+                    btnText: 'OK, Concluir'
+                });
             } else {
                 showToast("Sua ausência foi informada com sucesso.");
+                openSuccessModal({
+                    badge: 'ℹ️',
+                    title: 'Ausência Registrada',
+                    message: `Registramos que você não poderá servir na celebração: ${massName}.`,
+                    detailsHtml: `
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">👤 Nome:</span>
+                            <span class="modal-success-row-val">${serverName}</span>
+                        </div>
+                        <div class="modal-success-row">
+                            <span class="modal-success-row-label">⛪ Celebração:</span>
+                            <span class="modal-success-row-val">${massName}</span>
+                        </div>
+                    `,
+                    btnText: 'OK, Entendido'
+                });
             }
         }
 
@@ -3109,7 +3202,7 @@ function showToast(msg) {
 // =========================================================================
 // SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA & CACHE-BUSTER EM TEMPO REAL
 // =========================================================================
-const APP_CURRENT_VERSION = "1.5.0";
+const APP_CURRENT_VERSION = "1.5.1";
 let isCheckingUpdate = false;
 
 // =========================================================================
@@ -3156,6 +3249,53 @@ window.openPwaInstallModal = function() {
 window.closePwaInstallModal = function() {
     const modal = document.getElementById('modal-pwa-install');
     if (modal) modal.classList.add('hidden');
+};
+
+// =========================================================================
+// MODAL DE MENSAGEM FINAL DE SUCESSO (FEEDBACK CLARO APÓS SALVAR ESCALA)
+// =========================================================================
+window._successModalOnClose = null;
+
+window.openSuccessModal = function(options = {}) {
+    const modal = document.getElementById('modal-save-success');
+    if (!modal) return;
+
+    const badge = document.getElementById('modal-success-icon-badge');
+    const title = document.getElementById('modal-success-title');
+    const msg = document.getElementById('modal-success-msg');
+    const details = document.getElementById('modal-success-details');
+    const btn = document.getElementById('btn-save-success-close');
+
+    if (badge) badge.textContent = options.badge || '🎉';
+    if (title) title.textContent = options.title || 'Salvo com Sucesso!';
+    if (msg) msg.textContent = options.message || 'Suas informações foram registradas com sucesso.';
+    
+    if (details) {
+        if (options.detailsHtml) {
+            details.innerHTML = options.detailsHtml;
+            details.style.display = 'block';
+        } else {
+            details.style.display = 'none';
+        }
+    }
+
+    window._successModalOnClose = typeof options.onClose === 'function' ? options.onClose : null;
+
+    if (btn) {
+        btn.textContent = options.btnText || '✅ Entendido';
+    }
+
+    modal.classList.remove('hidden');
+};
+
+window.closeSuccessModal = function() {
+    const modal = document.getElementById('modal-save-success');
+    if (modal) modal.classList.add('hidden');
+    if (window._successModalOnClose) {
+        const cb = window._successModalOnClose;
+        window._successModalOnClose = null;
+        cb();
+    }
 };
 
 async function clearAppCaches() {
