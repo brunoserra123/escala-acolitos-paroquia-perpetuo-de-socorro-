@@ -12,11 +12,9 @@
 (function() {
     'use strict';
 
-    // Versão padrão do módulo (atualizada em sincronia com o version.json)
-    const CLIENT_VERSION = "1.5.1";
     let isChecking = false;
 
-    // Toast de notificação suave (usa o showToast da aplicação se existir, ou cria um próprio)
+    // Toast de notificação suave (usa o showToast da aplicação se existir, ou loga no console)
     function notify(message) {
         if (typeof window.showToast === 'function') {
             window.showToast(message);
@@ -39,7 +37,7 @@
     }
 
     /**
-     * Verifica atualizações no servidor.
+     * Verifica atualizações no servidor (version.json gerado automaticamente pelo GitHub).
      * @param {boolean} isManual Indica se foi clicado manualmente pelo usuário.
      */
     async function checkForUpdates(isManual = false) {
@@ -51,7 +49,7 @@
             const lastReloadTs = parseInt(sessionStorage.getItem('updater_last_reload_ts') || '0', 10);
             const now = Date.now();
             if (!isManual && (now - lastReloadTs < 20000)) {
-                console.log('[Updater] Proteção anti-loop ativa: atualização ignorada.');
+                console.log('[Updater] Proteção anti-loop ativa: atualização evitada.');
                 return;
             }
 
@@ -70,38 +68,38 @@
 
             const data = await response.json();
             const serverVersion = data && data.version ? String(data.version).trim() : null;
-            const storedVersion = localStorage.getItem('app_installed_version') || CLIENT_VERSION;
+            if (!serverVersion) return;
 
-            // Se a versão já é a mesma da instalada ou do cliente atual
-            if (serverVersion && (serverVersion === CLIENT_VERSION || serverVersion === storedVersion)) {
+            const storedVersion = localStorage.getItem('app_installed_version');
+
+            // Primeiro acesso do usuário: memoriza a versão inicial sem precisar recarregar
+            if (!storedVersion) {
                 localStorage.setItem('app_installed_version', serverVersion);
-                if (isManual) {
-                    notify("✅ Você já está na versão mais recente!");
-                }
+                if (isManual) notify("✅ Você já está na versão mais recente!");
+                return;
+            }
+
+            // Já está na mesma versão do servidor
+            if (serverVersion === storedVersion) {
+                if (isManual) notify("✅ Você já está na versão mais recente!");
                 return;
             }
 
             // Nova versão encontrada no servidor!
-            if (serverVersion && serverVersion !== storedVersion) {
-                console.log(`[Updater] Nova versão encontrada: ${serverVersion} (local: ${storedVersion}). Atualizando...`);
-                
-                // Registra versão e trava anti-loop
-                sessionStorage.setItem('updater_last_reload_ts', String(now));
-                localStorage.setItem('app_installed_version', serverVersion);
+            console.log(`[Updater] Nova versão detectada: ${serverVersion} (local: ${storedVersion}). Atualizando aplicativo...`);
+            
+            // Registra versão e trava anti-loop
+            sessionStorage.setItem('updater_last_reload_ts', String(now));
+            localStorage.setItem('app_installed_version', serverVersion);
 
-                await clearAllCaches();
-                notify("✨ Nova versão disponível! Atualizando...");
+            await clearAllCaches();
+            notify("✨ Nova versão disponível! Atualizando...");
 
-                setTimeout(() => {
-                    const cleanUrl = window.location.origin + window.location.pathname + '?_v=' + Date.now();
-                    window.location.replace(cleanUrl);
-                }, 800);
-                return;
-            }
-
-            if (isManual) {
-                notify("✅ Você já está na versão mais recente!");
-            }
+            setTimeout(() => {
+                const cleanUrl = window.location.origin + window.location.pathname + '?_v=' + Date.now();
+                window.location.replace(cleanUrl);
+            }, 800);
+            return;
         } catch (err) {
             console.warn('[Updater] Erro na verificação:', err);
             if (isManual) {
@@ -137,10 +135,6 @@
 
     // Inicialização segura dos ouvintes
     window.addEventListener('load', () => {
-        // Registra versão atual no storage sem sobrescrever se já tiver versão futura
-        if (!localStorage.getItem('app_installed_version')) {
-            localStorage.setItem('app_installed_version', CLIENT_VERSION);
-        }
         // Primeira checagem silenciosa após carregar
         setTimeout(() => checkForUpdates(false), 3000);
     });
@@ -162,5 +156,5 @@
         checkForUpdates(false);
     }, 5 * 60 * 1000);
 
-    console.log(`[Updater] Verificador de versão independente iniciado (v${CLIENT_VERSION}).`);
+    console.log('[Updater] Verificador de versão independente iniciado.');
 })();
