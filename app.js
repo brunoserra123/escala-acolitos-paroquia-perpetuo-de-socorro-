@@ -3200,12 +3200,6 @@ function showToast(msg) {
 }
 
 // =========================================================================
-// SISTEMA DE ATUALIZAÇÃO AUTOMÁTICA & CACHE-BUSTER EM TEMPO REAL
-// =========================================================================
-const APP_CURRENT_VERSION = "1.5.1";
-let isCheckingUpdate = false;
-
-// =========================================================================
 // PWA (PROGRESSIVE WEB APP) & INSTALAÇÃO NA TELA INICIAL (ANDROID & IPHONE)
 // =========================================================================
 let deferredInstallPrompt = null;
@@ -3297,108 +3291,6 @@ window.closeSuccessModal = function() {
         cb();
     }
 };
-
-async function clearAppCaches() {
-    try {
-        if ('caches' in window) {
-            const cacheNames = await caches.keys();
-            await Promise.all(cacheNames.map(name => caches.delete(name)));
-        }
-    } catch (e) {
-        console.warn("Aviso ao limpar cache de Service Worker:", e);
-    }
-}
-
-async function checkForUpdates(isManual = false) {
-    if (isCheckingUpdate) return;
-    isCheckingUpdate = true;
-    try {
-        const response = await fetch(`version.json?_t=${Date.now()}`, {
-            cache: 'no-store',
-            headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
-        });
-        if (!response.ok) return;
-
-        const data = await response.json();
-        const serverVersion = data && data.version ? String(data.version).trim() : null;
-        const storedVersion = localStorage.getItem('app_installed_version') || APP_CURRENT_VERSION;
-
-        // Se o código já está executando a versão do servidor, apenas sincroniza e não recarrega
-        if (serverVersion && serverVersion === APP_CURRENT_VERSION) {
-            localStorage.setItem('app_installed_version', serverVersion);
-            if (isManual) {
-                showToast("✅ Você já está na versão mais recente!");
-            }
-            return;
-        }
-
-        // Proteção contra loop: não recarrega automaticamente se já recarregou nos últimos 20 segundos
-        const lastReload = parseInt(sessionStorage.getItem('last_auto_update_ts') || '0', 10);
-        if (!isManual && (Date.now() - lastReload < 20000)) {
-            console.warn("[AutoUpdate] Proteção anti-loop ativa: atualização evitada.");
-            return;
-        }
-
-        if (serverVersion && serverVersion !== storedVersion && serverVersion !== APP_CURRENT_VERSION) {
-            console.log(`[AutoUpdate] Nova versão detectada no servidor: ${serverVersion} (local: ${APP_CURRENT_VERSION}). Atualizando aplicativo...`);
-            sessionStorage.setItem('last_auto_update_ts', String(Date.now()));
-            localStorage.setItem('app_installed_version', serverVersion);
-            await clearAppCaches();
-            showToast("✨ Nova versão encontrada! Atualizando...");
-            setTimeout(() => {
-                const cleanUrl = window.location.origin + window.location.pathname + '?_v=' + Date.now();
-                window.location.replace(cleanUrl);
-            }, 800);
-            return;
-        }
-
-        if (isManual) {
-            showToast("✅ Você já está na versão mais recente!");
-        }
-    } catch (err) {
-        console.warn("[AutoUpdate] Verificação de versão:", err);
-        if (isManual) {
-            showToast("Atualizando dados...");
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-    } finally {
-        isCheckingUpdate = false;
-    }
-}
-
-window.forceReloadApp = async function() {
-    const btn = document.getElementById('btn-force-reload');
-    if (btn) btn.classList.add('rotating');
-    showToast("🔄 Buscando novidades e limpando cache...");
-    await clearAppCaches();
-    try {
-        await checkForUpdates(true);
-    } finally {
-        if (btn) btn.classList.remove('rotating');
-    }
-};
-
-// Listeners para auto-atualização silenciosa
-window.addEventListener('load', () => {
-    localStorage.setItem('app_installed_version', APP_CURRENT_VERSION);
-    setTimeout(() => checkForUpdates(false), 2500);
-});
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        checkForUpdates(false);
-    }
-});
-
-window.addEventListener('focus', () => {
-    checkForUpdates(false);
-});
-
-setInterval(() => {
-    checkForUpdates(false);
-}, 30000);
 
 // Inicializa a aplicação
 init();
