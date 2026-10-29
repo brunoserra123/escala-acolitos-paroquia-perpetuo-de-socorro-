@@ -156,5 +156,6 @@
         checkForUpdates(false);
     }, 5 * 60 * 1000);
 
-    console.log('[Updater] Verificador de versão independente iniciado.');
+    // Modo 100% automatizado via GitHub Actions (.github/workflows/version.yml)
+    console.log('[Updater] Verificador de versão independente ativo com automação GitHub.');
 })();
