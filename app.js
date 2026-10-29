@@ -680,38 +680,62 @@ window.marcarPorFiltro = function(prefix) {
             cb.checked = true;
             count++;
         }
-        const chip = cb.closest('.cal-mass-chip');
+        const chip = cb.closest('.semana-chip') || cb.closest('.cal-mass-chip');
         if (chip) chip.classList.toggle('is-checked', cb.checked);
     });
-    document.querySelectorAll('.calendar-day-card').forEach(dayCard => {
-        const dayTicked = dayCard.querySelectorAll('input[name="mass"]:checked').length;
-        const badge = dayCard.querySelector('.cal-day-ticked-badge');
-        if (badge) {
-            badge.textContent = `✓ ${dayTicked}`;
-            badge.classList.toggle('hidden', dayTicked === 0);
-        }
-        dayCard.classList.toggle('has-ticked', dayTicked > 0);
-    });
+    updateSemanaCardBadges();
     updateMassDropdownSummary();
     updateSubmitButtonText();
     showToast(`${count} missa(s) marcada(s)! Toque em "Salvar" abaixo.`);
 };
 
+window.marcar19hNaSemana = function(weekIndex) {
+    const group = weekendGroups.find(g => g.index === weekIndex);
+    if (!group) return;
+    const m19 = group.masses.find(m => m.dayOfWeek === 0 && m.hora === '19:00');
+    if (!m19) {
+        showToast("Não há missa das 19h no domingo desta semana.");
+        return;
+    }
+    const cb = document.getElementById(`check-${m19.id}`);
+    if (cb) {
+        cb.checked = !cb.checked;
+        const chip = cb.closest('.semana-chip') || cb.closest('.cal-mass-chip');
+        if (chip) chip.classList.toggle('is-checked', cb.checked);
+        updateSemanaCardBadges();
+        updateMassDropdownSummary();
+        updateSubmitButtonText();
+        if (cb.checked) {
+            showToast(`✓ Missa das 19h (${m19.data}) marcada!`);
+        } else {
+            showToast(`Missa das 19h (${m19.data}) desmarcada.`);
+        }
+    }
+};
+
 window.desmarcarTodasMissas = function() {
     document.querySelectorAll('input[name="mass"]').forEach(cb => {
         cb.checked = false;
-        const chip = cb.closest('.cal-mass-chip');
+        const chip = cb.closest('.semana-chip') || cb.closest('.cal-mass-chip');
         if (chip) chip.classList.remove('is-checked');
     });
-    document.querySelectorAll('.calendar-day-card').forEach(dayCard => {
-        const badge = dayCard.querySelector('.cal-day-ticked-badge');
-        if (badge) badge.classList.add('hidden');
-        dayCard.classList.remove('has-ticked');
-    });
+    updateSemanaCardBadges();
     updateMassDropdownSummary();
     updateSubmitButtonText();
     showToast("Todas as missas foram desmarcadas!");
 };
+
+function updateSemanaCardBadges() {
+    document.querySelectorAll('.semana-card').forEach(card => {
+        const ticked = card.querySelectorAll('input[name="mass"]:checked').length;
+        const badge = card.querySelector('.semana-ticked-counter');
+        if (badge) {
+            badge.textContent = `✓ ${ticked} marcada${ticked > 1 ? 's' : ''}`;
+            badge.classList.toggle('hidden', ticked === 0);
+        }
+        card.classList.toggle('has-ticked', ticked > 0);
+    });
+}
 
 // Configuração dos Botões de Ação Rápida (Shortcuts)
 function setupQuickActions() {
@@ -770,7 +794,7 @@ function setupQuickActions() {
     }
 }
 
-// Renderização das Opções de Missa (Calendário Mensal Interativo Dia a Dia)
+// Renderização das Opções de Missa (Semana a Semana - Cards Limpos e Intuitivos)
 function renderMassOptions() {
     massOptions.innerHTML = '';
     
@@ -783,105 +807,110 @@ function renderMassOptions() {
                 .map(a => a.mass_id);
         }
 
-        const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
-        const firstDayWeekIndex = new Date(selectedYear, selectedMonth, 1).getDay(); // 0=Dom, 6=Sáb
-        const today = new Date();
-        const isCurrentMonth = today.getFullYear() === selectedYear && today.getMonth() === selectedMonth;
-        const currentDayNum = isCurrentMonth ? today.getDate() : -1;
-
-        const calWrap = document.createElement('div');
-        calWrap.className = 'calendar-wrap';
-
-        // Cabeçalho dos dias da semana (Dom a Sáb)
-        const weekdaysRow = document.createElement('div');
-        weekdaysRow.className = 'calendar-weekdays-row';
-        const weekdayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        weekdayNames.forEach((w, idx) => {
-            const wCol = document.createElement('div');
-            wCol.className = `cal-weekday-title ${idx === 0 || idx === 6 ? 'weekend' : ''}`;
-            wCol.textContent = w;
-            weekdaysRow.appendChild(wCol);
-        });
-        calWrap.appendChild(weekdaysRow);
-
-        // Grade de dias do calendário
-        const daysGrid = document.createElement('div');
-        daysGrid.className = 'calendar-days-grid';
-
-        // Células vazias antes do dia 1
-        for (let i = 0; i < firstDayWeekIndex; i++) {
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'calendar-day-empty';
-            daysGrid.appendChild(emptyCell);
+        if (!weekendGroups || weekendGroups.length === 0) {
+            massOptions.innerHTML = '<p style="text-align:center; color:#7f8c8d; padding:20px;">Nenhuma data encontrada para este mês.</p>';
+            return;
         }
 
-        // Células dos dias 1 até daysInMonth
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dd = String(day).padStart(2, '0');
-            const mm = String(selectedMonth + 1).padStart(2, '0');
-            const isoDate = `${selectedYear}-${mm}-${dd}`;
-            const dayMasses = massSchedules.filter(m => m.isoDate === isoDate);
+        const container = document.createElement('div');
+        container.className = 'semanas-container';
 
-            const tickedInDay = dayMasses.filter(m => serverMassIds.includes(m.id)).length;
-            const isToday = day === currentDayNum;
+        weekendGroups.forEach(group => {
+            const card = document.createElement('div');
+            card.className = 'semana-card';
+            card.id = `semana-card-${group.index}`;
 
-            const dayCard = document.createElement('div');
-            dayCard.className = `calendar-day-card ${isToday ? 'is-today' : ''} ${tickedInDay > 0 ? 'has-ticked' : ''}`;
+            const tickedInGroup = group.masses.filter(m => serverMassIds.includes(m.id)).length;
+            if (tickedInGroup > 0) card.classList.add('has-ticked');
 
-            const dayHeader = document.createElement('div');
-            dayHeader.className = 'cal-day-header';
-            dayHeader.innerHTML = `
-                <span class="cal-day-number">${day}</span>
-                <span class="cal-day-ticked-badge ${tickedInDay > 0 ? '' : 'hidden'}">✓ ${tickedInDay}</span>
+            // Header do card da semana
+            const header = document.createElement('div');
+            header.className = 'semana-card-header';
+            header.innerHTML = `
+                <div class="semana-title-wrap">
+                    <span class="semana-badge-num">Semana ${group.index}</span>
+                    <h4 class="semana-title">${group.fullLabel}</h4>
+                    <span class="semana-ticked-counter ${tickedInGroup > 0 ? '' : 'hidden'}">✓ ${tickedInGroup} marcada(s)</span>
+                </div>
+                <button type="button" class="btn-semana-19h" onclick="marcar19hNaSemana(${group.index})" title="Marcar domingo às 19h desta semana">
+                    ⭐ Marcar 19h
+                </button>
             `;
-            dayCard.appendChild(dayHeader);
+            card.appendChild(header);
 
-            const massesWrap = document.createElement('div');
-            massesWrap.className = 'cal-day-masses';
-
-            dayMasses.forEach(m => {
-                const isTicked = serverMassIds.includes(m.id);
-                const chip = document.createElement('label');
-                chip.className = `cal-mass-chip ${isTicked ? 'is-checked' : ''}`;
-                chip.setAttribute('for', `check-${m.id}`);
-                chip.title = m.obs ? `${m.hora} - ${m.obs}` : `${m.hora}`;
-                chip.innerHTML = `
-                    <input type="checkbox" id="check-${m.id}" name="mass" value="${m.id}" ${isTicked ? 'checked' : ''}>
-                    <span class="cal-mass-time">
-                        <span class="cal-mass-check-icon">✓</span>
-                        ${m.hora}
-                    </span>
-                    ${m.obs ? `<span class="cal-mass-star" title="${m.obs}">⭐</span>` : ''}
-                `;
-
-                chip.addEventListener('click', () => {
-                    setTimeout(() => {
-                        const cb = chip.querySelector('input[type="checkbox"]');
-                        if (cb) {
-                            chip.classList.toggle('is-checked', cb.checked);
-                            const dayTicked = dayCard.querySelectorAll('input[type="checkbox"]:checked').length;
-                            const badge = dayCard.querySelector('.cal-day-ticked-badge');
-                            if (badge) {
-                                badge.textContent = `✓ ${dayTicked}`;
-                                badge.classList.toggle('hidden', dayTicked === 0);
-                            }
-                            dayCard.classList.toggle('has-ticked', dayTicked > 0);
-                        }
-                        updateMassDropdownSummary();
-                        updateSubmitButtonText();
-                    }, 10);
-                });
-
-                massesWrap.appendChild(chip);
+            // Agrupa as missas por dia (Sábado, Domingo, e dias da semana)
+            const daysMap = {};
+            group.masses.forEach(m => {
+                if (!daysMap[m.data]) {
+                    daysMap[m.data] = {
+                        dia: m.dia,
+                        data: m.data,
+                        isoDate: m.isoDate,
+                        dayOfWeek: m.dayOfWeek,
+                        masses: []
+                    };
+                }
+                daysMap[m.data].masses.push(m);
             });
 
-            dayCard.appendChild(massesWrap);
-            daysGrid.appendChild(dayCard);
-        }
+            const daysContainer = document.createElement('div');
+            daysContainer.className = 'semana-days-grid';
 
-        calWrap.appendChild(daysGrid);
-        massOptions.appendChild(calWrap);
+            Object.values(daysMap).forEach(dayObj => {
+                const dayBox = document.createElement('div');
+                const isWeekend = (dayObj.dayOfWeek === 0 || dayObj.dayOfWeek === 6);
+                dayBox.className = `semana-day-box ${isWeekend ? 'is-weekend' : 'is-weekday'}`;
 
+                const dayTitle = document.createElement('div');
+                dayTitle.className = 'semana-day-title';
+                dayTitle.innerHTML = `
+                    <span class="day-name">${dayObj.dia}</span>
+                    <span class="day-date">${dayObj.data}</span>
+                `;
+                dayBox.appendChild(dayTitle);
+
+                const chipsWrap = document.createElement('div');
+                chipsWrap.className = 'semana-chips-wrap';
+
+                dayObj.masses.forEach(m => {
+                    const isTicked = serverMassIds.includes(m.id);
+                    const chip = document.createElement('label');
+                    chip.className = `semana-chip ${isTicked ? 'is-checked' : ''} ${m.hora === '19:00' ? 'is-19h' : ''}`;
+                    chip.setAttribute('for', `check-${m.id}`);
+                    chip.title = m.obs ? `${m.hora} - ${m.obs}` : `${m.hora}`;
+                    chip.innerHTML = `
+                        <input type="checkbox" id="check-${m.id}" name="mass" value="${m.id}" ${isTicked ? 'checked' : ''}>
+                        <span class="chip-check-icon">✓</span>
+                        <span class="chip-hora">${m.hora}</span>
+                        ${m.obs ? `<span class="chip-obs">${m.obs}</span>` : ''}
+                    `;
+
+                    chip.addEventListener('click', () => {
+                        setTimeout(() => {
+                            const cb = chip.querySelector('input[type="checkbox"]');
+                            if (cb) {
+                                chip.classList.toggle('is-checked', cb.checked);
+                            }
+                            updateSemanaCardBadges();
+                            updateMassDropdownSummary();
+                            updateSubmitButtonText();
+                        }, 10);
+                    });
+
+                    chipsWrap.appendChild(chip);
+                });
+
+                dayBox.appendChild(chipsWrap);
+                daysContainer.appendChild(dayBox);
+            });
+
+            card.appendChild(daysContainer);
+            container.appendChild(card);
+        });
+
+        massOptions.appendChild(container);
+
+        updateSemanaCardBadges();
         updateMassDropdownSummary();
         updateSubmitButtonText();
     } else if (currentMode === 'special' && currentSpecialMassId) {
@@ -940,14 +969,10 @@ function updateTicksForSelectedServer() {
         
         document.querySelectorAll('input[name="mass"]').forEach(cb => {
             cb.checked = false;
-            const chip = cb.closest('.cal-mass-chip');
+            const chip = cb.closest('.semana-chip') || cb.closest('.cal-mass-chip');
             if (chip) chip.classList.remove('is-checked');
         });
-        document.querySelectorAll('.calendar-day-card').forEach(dayCard => {
-            const badge = dayCard.querySelector('.cal-day-ticked-badge');
-            if (badge) badge.classList.add('hidden');
-            dayCard.classList.remove('has-ticked');
-        });
+        updateSemanaCardBadges();
         updateSubmitButtonText();
         syncPersonalViewToServer(null);
         return;
@@ -966,22 +991,13 @@ function updateTicksForSelectedServer() {
     document.querySelectorAll('input[name="mass"]').forEach(cb => {
         const isTicked = registeredIds.includes(cb.value);
         cb.checked = isTicked;
-        const chip = cb.closest('.cal-mass-chip');
+        const chip = cb.closest('.semana-chip') || cb.closest('.cal-mass-chip');
         if (chip) {
             chip.classList.toggle('is-checked', isTicked);
         }
     });
 
-    // Atualiza os badges dos dias do calendário
-    document.querySelectorAll('.calendar-day-card').forEach(dayCard => {
-        const dayTicked = dayCard.querySelectorAll('input[name="mass"]:checked').length;
-        const badge = dayCard.querySelector('.cal-day-ticked-badge');
-        if (badge) {
-            badge.textContent = `✓ ${dayTicked}`;
-            badge.classList.toggle('hidden', dayTicked === 0);
-        }
-        dayCard.classList.toggle('has-ticked', dayTicked > 0);
-    });
+    updateSemanaCardBadges();
     
     const monthText = `${MONTH_NAMES[selectedMonth]} de ${selectedYear}`;
     if (serverRegistrations.length > 0) {

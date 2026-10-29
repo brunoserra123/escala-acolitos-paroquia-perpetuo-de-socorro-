@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
-  "updated_at": "2026-10-28T11:20:00Z",
-  "description": "Simplificada e limpa a Agenda Geral: removidos filtros confusos de semanas e contagens incorretas na visao pessoal"
+  "version": "1.5.0",
+  "updated_at": "2026-10-29T11:50:00Z",
+  "description": "Visualizacao simplificada semana a semana com atalho de 19h e facilidade para ajustar imprevistos"
 }

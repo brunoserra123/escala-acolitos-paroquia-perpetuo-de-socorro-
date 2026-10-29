@@ -4454,3 +4454,232 @@ img {
 .pwa-platform ol li {
     margin-bottom: 6px;
 }
+
+/* ========================================================
+   CARTÕES SEMANA A SEMANA (SIMPLIFICADO E INTUITIVO)
+   ======================================================== */
+.semanas-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    margin-top: 12px;
+}
+
+.semana-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    transition: all 0.25s ease;
+}
+
+.semana-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-color: #cbd5e1;
+}
+
+.semana-card.has-ticked {
+    border-color: #3b82f6;
+    background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
+}
+
+.semana-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.semana-title-wrap {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.semana-badge-num {
+    background: #e0e7ff;
+    color: #1a237e;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.semana-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.semana-ticked-counter {
+    background: #dcfce7;
+    color: #166534;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+}
+
+.btn-semana-19h {
+    background: #fffbeb;
+    border: 1.5px solid #f59e0b;
+    color: #b45309;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-semana-19h:hover {
+    background: #fef3c7;
+    color: #92400e;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.semana-days-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.semana-day-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.semana-day-box.is-weekend {
+    background: #fdfdfd;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.semana-day-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.semana-day-title .day-name {
+    color: #1a237e;
+    font-weight: 800;
+}
+
+.semana-day-title .day-date {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.semana-chips-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.semana-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 0.85rem;
+    color: #334155;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.semana-chip input[type="checkbox"] {
+    display: none;
+}
+
+.semana-chip .chip-check-icon {
+    display: none;
+    font-weight: 900;
+}
+
+.semana-chip.is-checked {
+    background: #1a237e;
+    border-color: #1a237e;
+    color: #ffffff;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(26, 35, 126, 0.25);
+    transform: translateY(-1px);
+}
+
+.semana-chip.is-checked .chip-check-icon {
+    display: inline-block;
+}
+
+.semana-chip.is-19h:not(.is-checked) {
+    border-color: #f59e0b;
+    background: #fffdf5;
+    font-weight: 600;
+}
+
+.semana-chip:hover:not(.is-checked) {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
+
+.semana-chip .chip-obs {
+    font-size: 0.72rem;
+    opacity: 0.85;
+    margin-left: 2px;
+}
+
+.btn-quick-gold {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    border: none !important;
+    box-shadow: 0 3px 10px rgba(245, 158, 11, 0.3) !important;
+}
+
+.btn-quick-gold:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4) !important;
+}
+
+@media (max-width: 600px) {
+    .semana-card {
+        padding: 12px 14px;
+    }
+    .semana-days-grid {
+        grid-template-columns: 1fr;
+    }
+    .btn-semana-19h {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 14px;
+    }
+}
