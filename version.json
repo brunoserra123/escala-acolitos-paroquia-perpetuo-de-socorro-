@@ -1,5 +1,6 @@
 {
-  "version": "1.5.1",
-  "updated_at": "2026-10-29T13:20:00Z",
-  "description": "Adicionado modal com mensagem final de sucesso ao salvar escala"
+  "version": "22274e0",
+  "updated_at": "2026-10-29T17:34:46Z",
+  "commit": "22274e0dede3ac213bb5a5ea55207e70ad7e0d00",
+  "description": "Ativar integracao do updater com automacao do GitHub Actions"
 }
