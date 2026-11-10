@@ -1,6 +1,6 @@
 {
-  "version": "22274e0",
-  "updated_at": "2026-10-29T17:34:46Z",
-  "commit": "22274e0dede3ac213bb5a5ea55207e70ad7e0d00",
-  "description": "Ativar integracao do updater com automacao do GitHub Actions"
+  "version": "0f76275",
+  "updated_at": "2026-11-10T11:41:44Z",
+  "commit": "0f762755729183a6898385c65842c09c4d541f45",
+  "description": "Publicar nova versao simples e direta da Escala de Acolitos"
 }
