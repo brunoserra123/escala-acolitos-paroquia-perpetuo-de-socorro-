@@ -1,6 +1,6 @@
 {
-  "version": "0f76275",
-  "updated_at": "2026-11-10T11:41:44Z",
-  "commit": "0f762755729183a6898385c65842c09c4d541f45",
-  "description": "Publicar nova versao simples e direta da Escala de Acolitos"
+  "version": "d6a8ce3",
+  "updated_at": "2026-11-18T15:40:51Z",
+  "commit": "d6a8ce3ef73b23b25a10f84f3c69bf693b28cffa",
+  "description": "Simplificar escala em dois passos e facilitar uso no celular"
 }
