@@ -1,6 +1,6 @@
 {
-  "version": "d6a8ce3",
-  "updated_at": "2026-11-18T15:40:51Z",
-  "commit": "d6a8ce3ef73b23b25a10f84f3c69bf693b28cffa",
-  "description": "Simplificar escala em dois passos e facilitar uso no celular"
+  "version": "4b25812",
+  "updated_at": "2026-11-22T16:15:04Z",
+  "commit": "4b258129b03d019bacf4b12ac23c6255685d15af",
+  "description": "Salvar as marcações da escala na planilha da paróquia"
 }
