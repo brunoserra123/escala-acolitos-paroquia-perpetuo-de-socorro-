@@ -1,6 +1,6 @@
 {
-  "version": "4b25812",
-  "updated_at": "2026-11-22T16:15:04Z",
-  "commit": "4b258129b03d019bacf4b12ac23c6255685d15af",
-  "description": "Salvar as marcações da escala na planilha da paróquia"
+  "version": "330a025",
+  "updated_at": "2026-11-22T16:17:43Z",
+  "commit": "330a025442297a4554a1f1337fd347d95e06c0f4",
+  "description": "Mostrar o dia da semana ao lado da data em Minhas escolhas"
 }
