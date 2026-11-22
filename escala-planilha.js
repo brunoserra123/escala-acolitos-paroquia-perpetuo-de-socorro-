@@ -86,8 +86,8 @@
     $('summaryCount').textContent=!ready?'Aguardando a planilha.':!user?'Escolha seu nome para ver suas missas.':mine.length+' '+(mine.length===1?'missa marcada':'missas marcadas')+' neste mês';
     $('summaryList').replaceChildren();
     for(const s of mine){
-      const li=node('li');li.append(node('span','','✓ '+s.date.slice(0,5)+' às '+s.time));
-      if(swaps){const b=node('button','remove','×');b.disabled=locked;b.setAttribute('aria-label','Desmarcar '+s.date+' às '+s.time);b.onclick=()=>change([s],false);li.append(b);}
+      const li=node('li');li.append(node('span','','✓ '+s.day+', '+s.date.slice(0,5)+' às '+s.time));
+      if(swaps){const b=node('button','remove','×');b.disabled=locked;b.setAttribute('aria-label','Desmarcar '+s.day+', '+s.date+' às '+s.time);b.onclick=()=>change([s],false);li.append(b);}
       $('summaryList').append(li);
     }
     $('clearAll').hidden=!swaps;$('clearAll').disabled=locked||!mine.length;
