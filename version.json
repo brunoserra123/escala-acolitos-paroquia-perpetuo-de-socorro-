@@ -1,6 +1,6 @@
 {
-  "version": "7ec2199",
-  "updated_at": "2026-11-23T10:55:55Z",
-  "commit": "7ec21995903d08cde239c27e509c63d522cc8d12",
-  "description": "Visual: modernizar e destacar lista de quem vai servir com cards, badges e tags de nomes"
+  "version": "d685344",
+  "updated_at": "2026-11-23T11:03:46Z",
+  "commit": "d685344185411b2c0ad8821c5957ed06420bfbd8",
+  "description": "Adicionar opcoes para Substituir acolito, tirar individualmente no x e botao Tirar todos do horario"
 }
