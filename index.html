@@ -7,6 +7,14 @@
     <meta name="theme-color" content="#214d40">
     <title>Escala de Acólitos e Coroinhas</title>
     <link rel="icon" href="favicon.ico">
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Escala Acólitos">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <style>
         :root {
             --green: #214d40;
@@ -879,6 +887,28 @@
             background: #762e27
         }
 
+        .btn-install-app {
+            margin-left: auto;
+            background: #ffffff;
+            color: var(--green);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .btn-install-app:hover {
+            background: #edf5f0;
+            transform: translateY(-1px);
+        }
+
         button[hidden] {
             display: none
         }
@@ -888,8 +918,12 @@
 <body>
     <a class="skip" href="#identity">Ir para escolher meu nome</a>
     <header>
-        <div class="wrap brand"><span class="brand-mark" aria-hidden="true">✝</span>
-            <div><strong>Acólitos e coroinhas</strong><small>Paróquia N. Sra. do Perpétuo Socorro</small></div>
+        <div class="wrap brand">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span class="brand-mark" aria-hidden="true">✝</span>
+                <div><strong>Acólitos e coroinhas</strong><small>Paróquia N. Sra. do Perpétuo Socorro</small></div>
+            </div>
+            <button id="btnInstallApp" class="btn-install-app" type="button" title="Instalar aplicativo no celular">📲 Instalar App</button>
         </div>
     </header>
     <main class="wrap">
@@ -956,7 +990,36 @@
     </main>
     <div id="feedback" role="status" hidden></div>
     <footer class="wrap">Escala de acólitos e coroinhas · Perpétuo Socorro</footer>
-    <script src="escala-planilha.js?v=2.2"></script>
+    <script src="escala-planilha.js?v=2.3"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
+      }
+      let deferredPrompt = null;
+      const btnInstall = document.getElementById('btnInstallApp');
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+      });
+      if (btnInstall) {
+        btnInstall.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+          } else {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS) {
+              alert('📲 Como instalar no iPhone:\n\n1. Toque no botão Compartilhar (quadrado com seta ⬆️ no rodapé do Safari).\n2. Role um pouco para baixo e toque em "Adicionar à Tela de Início" ➕.\n3. Toque em "Adicionar" no topo direito.');
+            } else {
+              alert('📲 Como instalar no Android:\n\nToque no menu do navegador (três pontinhos ⋮ no topo direito) e selecione "Instalar aplicativo" ou "Adicionar à tela inicial".');
+            }
+          }
+        });
+      }
+    </script>
 </body>
 
 </html>

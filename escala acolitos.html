@@ -7,6 +7,14 @@
     <meta name="theme-color" content="#214d40">
     <title>Escala de Acólitos e Coroinhas</title>
     <link rel="icon" href="favicon.ico">
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Escala Acólitos">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
     <style>
         :root {
             --green: #214d40;
@@ -571,7 +579,7 @@
             padding: 14px;
             margin-top: 10px;
             text-align: left;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         }
 
         .coord-actions {
@@ -879,6 +887,28 @@
             background: #762e27
         }
 
+        .btn-install-app {
+            margin-left: auto;
+            background: #ffffff;
+            color: var(--green);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 7px 14px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+
+        .btn-install-app:hover {
+            background: #edf5f0;
+            transform: translateY(-1px);
+        }
+
         button[hidden] {
             display: none
         }
@@ -888,8 +918,12 @@
 <body>
     <a class="skip" href="#identity">Ir para escolher meu nome</a>
     <header>
-        <div class="wrap brand"><span class="brand-mark" aria-hidden="true">✝</span>
-            <div><strong>Acólitos e coroinhas</strong><small>Paróquia N. Sra. do Perpétuo Socorro</small></div>
+        <div class="wrap brand">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span class="brand-mark" aria-hidden="true">✝</span>
+                <div><strong>Acólitos e coroinhas</strong><small>Paróquia N. Sra. do Perpétuo Socorro</small></div>
+            </div>
+            <button id="btnInstallApp" class="btn-install-app" type="button" title="Instalar aplicativo no celular">📲 Instalar App</button>
         </div>
     </header>
     <main class="wrap">
@@ -912,17 +946,21 @@
                 <button id="btnCoord" type="button" class="coord-btn">🔐 Área do Coordenador</button>
                 <div id="coordPanel" class="coord-panel" hidden>
                     <strong>⚙️ Painel da Coordenação (Luiggi Barudi / Bruno Serra)</strong>
-                    <p class="muted" style="font-size:12px; margin:4px 0 10px 0;">Gerencie e higienize a escala oficial da paróquia:</p>
+                    <p class="muted" style="font-size:12px; margin:4px 0 10px 0;">Gerencie e higienize a escala oficial
+                        da paróquia:</p>
                     <div class="coord-actions">
-                        <button id="btnLimparAntigas" type="button" class="coord-act-btn">🧹 Apagar escalas com mais de 7 dias</button>
-                        <button id="btnZerarMes" type="button" class="coord-act-btn danger">🗑️ Zerar escala de todo este mês</button>
+                        <button id="btnLimparAntigas" type="button" class="coord-act-btn">🧹 Apagar escalas com mais de
+                            7 dias</button>
+                        <button id="btnZerarMes" type="button" class="coord-act-btn danger">🗑️ Zerar escala de todo
+                            este mês</button>
                         <button id="btnSairCoord" type="button" class="coord-act-btn logout">Sair</button>
                     </div>
                 </div>
             </div>
         </section>
         <p class="notice"><strong>Escala da paróquia.</strong> O ✓ aparece quando a planilha confirma sua marcação.
-            <button id="refresh" type="button">Atualizar escala</button></p>
+            <button id="refresh" type="button">Atualizar escala</button>
+        </p>
         <div class="layout">
             <section aria-labelledby="calendarTitle">
                 <div class="calendar-head">
@@ -945,13 +983,43 @@
                 <p class="summary-count" id="summaryCount"></p>
                 <ul class="summary-list" id="summaryList"></ul><button class="danger" id="clearAll" disabled>Desmarcar
                     minhas missas deste mês</button>
-                <p class="save-note">O ✓ indica uma missa marcada. Você pode usar os botões 🔄 Trocar Horário ou ❌ Desistir para alterar suas presenças.</p>
+                <p class="save-note">O ✓ indica uma missa marcada. Você pode usar os botões 🔄 Trocar Horário ou ❌
+                    Desistir para alterar suas presenças.</p>
             </aside>
         </div>
     </main>
     <div id="feedback" role="status" hidden></div>
     <footer class="wrap">Escala de acólitos e coroinhas · Perpétuo Socorro</footer>
-    <script src="escala-planilha.js?v=2.2"></script>
+    <script src="escala-planilha.js?v=2.3"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
+      }
+      let deferredPrompt = null;
+      const btnInstall = document.getElementById('btnInstallApp');
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+      });
+      if (btnInstall) {
+        btnInstall.addEventListener('click', async () => {
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+          } else {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIOS) {
+              alert('📲 Como instalar no iPhone:\n\n1. Toque no botão Compartilhar (quadrado com seta ⬆️ no rodapé do Safari).\n2. Role um pouco para baixo e toque em "Adicionar à Tela de Início" ➕.\n3. Toque em "Adicionar" no topo direito.');
+            } else {
+              alert('📲 Como instalar no Android:\n\nToque no menu do navegador (três pontinhos ⋮ no topo direito) e selecione "Instalar aplicativo" ou "Adicionar à tela inicial".');
+            }
+          }
+        });
+      }
+    </script>
 </body>
 
 </html>
