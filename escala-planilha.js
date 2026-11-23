@@ -21,6 +21,24 @@
   const [y,m]=localNow().split(' ')[0].split('-').map(Number);
   let month=new Date(y,m-1,1,12), ready=false,busy=false,user='', names=[],grade={}, swaps=false;
   let records=new Map(),slots=[],toastTimer;
+
+  const SENHAS_VALIDAS=['acolitos2026','amoservir'];
+  let isCoord=sessionStorage.getItem('coord_auth')==='1';
+
+  function verificarOuPedirSenhaCoord(motivo){
+    if(isCoord)return true;
+    const pass=prompt((motivo?motivo+'\n\n':'')+'🔐 Esta ação requer autorização da Coordenação.\nDigite a senha do Coordenador:');
+    if(!pass)return false;
+    if(SENHAS_VALIDAS.includes(pass.trim().toLowerCase())){
+      isCoord=true;
+      sessionStorage.setItem('coord_auth','1');
+      if($('coordPanel'))$('coordPanel').hidden=false;
+      say('Acesso de Coordenador liberado!',true);
+      return true;
+    }
+    alert('❌ Senha incorreta! Somente a coordenação tem permissão para esta ação.');
+    return false;
+  }
   function say(msg,toast=false,error=false) {
     $('status').textContent=msg;
     clearTimeout(toastTimer);$('feedback').hidden=!toast;
@@ -196,6 +214,10 @@
   }
   async function removerNome(s,name){
     if(busy)return;
+    const isMe=!!user&&(name.toLowerCase().trim()===user.toLowerCase().trim());
+    if(!isMe&&!isCoord){
+      if(!verificarOuPedirSenhaCoord('Você está tentando tirar '+formatName(name)+' deste horário.'))return;
+    }
     if(!confirm('Deseja tirar '+formatName(name)+' da missa de '+s.day+', '+s.date+' às '+s.time+'?'))return;
     busy=true;render();
     try{
@@ -210,7 +232,8 @@
   }
   async function tirarTodosDoHorario(s,namesList){
     if(busy||!namesList.length)return;
-    if(!confirm('Tem certeza que deseja TIRAR TODO MUNDO ('+namesList.length+' pessoas) da missa de '+s.day+', '+s.date+' às '+s.time+'?'))return;
+    if(!verificarOuPedirSenhaCoord('⚠️ ATENÇÃO: Você solicitou TIRAR TODO MUNDO ('+namesList.length+' acólitos) da missa de '+s.day+', '+s.date+' às '+s.time+'.'))return;
+    if(!confirm('Tem certeza absoluta que deseja TIRAR TODO MUNDO ('+namesList.length+' pessoas) da missa de '+s.day+', '+s.date+' às '+s.time+'?'))return;
     busy=true;render();
     try{
       say('Tirando todos da missa de '+s.time+'…',true);
@@ -367,21 +390,14 @@
     }finally{busy=false;render();}
   }
 
-  const SENHAS_VALIDAS=['acolitos2026','amoservir'];
-  let isCoord=sessionStorage.getItem('coord_auth')==='1';
   function setupCoord(){
     const p=$('coordPanel'), b=$('btnCoord');
     if(!p||!b)return;
     p.hidden=!isCoord;
     b.onclick=()=>{
       if(isCoord){p.hidden=!p.hidden;return;}
-      const pass=prompt('Digite a senha de Coordenador:');
-      if(!pass)return;
-      if(SENHAS_VALIDAS.includes(pass.trim().toLowerCase())){
-        isCoord=true;sessionStorage.setItem('coord_auth','1');
-        p.hidden=false;say('Acesso de Coordenador liberado!',true);
-      }else{
-        alert('Senha incorreta.');
+      if(verificarOuPedirSenhaCoord('Painel da Coordenação (Luiggi Barudi / Bruno Serra)')){
+        p.hidden=false;
       }
     };
     if($('btnLimparAntigas'))$('btnLimparAntigas').onclick=apagarEscalasAntigas;
