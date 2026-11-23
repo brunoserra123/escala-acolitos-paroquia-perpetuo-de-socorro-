@@ -542,6 +542,147 @@
             border-color: #8c3228;
         }
 
+        .coord-bar {
+            margin-top: 14px;
+            text-align: center;
+        }
+
+        .coord-btn {
+            background: #f0f5f2;
+            border: 1px solid #c2d8cc;
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .coord-btn:hover {
+            background: #e2ede7;
+            border-color: var(--green);
+        }
+
+        .coord-panel {
+            background: #f8faf8;
+            border: 1px solid #cce0d4;
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 10px;
+            text-align: left;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .coord-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .coord-act-btn {
+            background: white;
+            border: 1px solid #c6dcce;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--ink);
+            transition: all 0.15s;
+        }
+
+        .coord-act-btn:hover {
+            background: var(--light);
+            border-color: var(--green);
+        }
+
+        .coord-act-btn.danger {
+            background: #fff5f4;
+            border-color: #ecc5c1;
+            color: #8c3228;
+        }
+
+        .coord-act-btn.danger:hover {
+            background: #fcebe9;
+            border-color: #8c3228;
+        }
+
+        .coord-act-btn.logout {
+            margin-left: auto;
+            color: var(--muted);
+        }
+
+        .my-schedule-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 10px 0;
+            border-top: 1px solid var(--line);
+        }
+
+        .my-schedule-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .my-schedule-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--green);
+        }
+
+        .my-schedule-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .btn-trocar-meu {
+            background: var(--light);
+            border: 1px solid #c2dbcd;
+            color: var(--green);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            min-height: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+
+        .btn-trocar-meu:hover {
+            background: #ddead2;
+            border-color: var(--green);
+        }
+
+        .btn-desistir-meu {
+            background: #fff5f4;
+            border: 1px solid #ecc5c1;
+            color: #8c3228;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            min-height: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+
+        .btn-desistir-meu:hover {
+            background: #fcebe9;
+            border-color: #8c3228;
+        }
+
         .summary-card {
             position: sticky;
             top: 20px
@@ -767,6 +908,18 @@
                 <option>Carregando nomes…</option>
             </select>
             <div id="status" class="status" role="status" aria-live="polite">Buscando a escala na planilha…</div>
+            <div class="coord-bar">
+                <button id="btnCoord" type="button" class="coord-btn">🔐 Área do Coordenador</button>
+                <div id="coordPanel" class="coord-panel" hidden>
+                    <strong>⚙️ Painel da Coordenação (Luiggi Barudi / Bruno Serra)</strong>
+                    <p class="muted" style="font-size:12px; margin:4px 0 10px 0;">Gerencie e higienize a escala oficial da paróquia:</p>
+                    <div class="coord-actions">
+                        <button id="btnLimparAntigas" type="button" class="coord-act-btn">🧹 Apagar escalas com mais de 7 dias</button>
+                        <button id="btnZerarMes" type="button" class="coord-act-btn danger">🗑️ Zerar escala de todo este mês</button>
+                        <button id="btnSairCoord" type="button" class="coord-act-btn logout">Sair</button>
+                    </div>
+                </div>
+            </div>
         </section>
         <p class="notice"><strong>Escala da paróquia.</strong> O ✓ aparece quando a planilha confirma sua marcação.
             <button id="refresh" type="button">Atualizar escala</button></p>
@@ -792,7 +945,7 @@
                 <p class="summary-count" id="summaryCount"></p>
                 <ul class="summary-list" id="summaryList"></ul><button class="danger" id="clearAll" disabled>Desmarcar
                     minhas missas deste mês</button>
-                <p class="save-note">O ✓ indica uma missa marcada. Toque de novo no horário para desmarcar.</p>
+                <p class="save-note">O ✓ indica uma missa marcada. Você pode usar os botões 🔄 Trocar Horário ou ❌ Desistir para alterar suas presenças.</p>
             </aside>
         </div>
     </main>

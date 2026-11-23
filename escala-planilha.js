@@ -137,8 +137,24 @@
     $('summaryCount').textContent=!ready?'Aguardando a planilha.':!user?'Escolha seu nome para ver suas missas.':mine.length+' '+(mine.length===1?'missa marcada':'missas marcadas')+' neste mês';
     $('summaryList').replaceChildren();
     for(const s of mine){
-      const li=node('li');li.append(node('span','','✓ '+s.day+', '+s.date.slice(0,5)+' às '+s.time));
-      if(swaps){const b=node('button','remove','×');b.disabled=locked;b.setAttribute('aria-label','Desmarcar '+s.day+', '+s.date+' às '+s.time);b.onclick=()=>change([s],false);li.append(b);}
+      const li=node('li','my-schedule-item');
+      const info=node('div','my-schedule-info');
+      info.append(node('span','my-schedule-title','✓ '+s.day+', '+s.date.slice(0,5)+' às '+s.time));
+      if(s.label)info.append(node('span','roster-label-tag',s.label));
+      li.append(info);
+      if(swaps){
+        const acts=node('div','my-schedule-actions');
+        const bTrocar=node('button','btn-trocar-meu','🔄 Trocar Horário');
+        bTrocar.type='button';bTrocar.title='Trocar para outro horário neste mês';
+        bTrocar.onclick=()=>trocarMeuHorario(s);
+        const bDesistir=node('button','btn-desistir-meu','❌ Desistir');
+        bDesistir.type='button';bDesistir.title='Desistir desta missa';
+        bDesistir.onclick=()=>{
+          if(confirm('Deseja desistir da missa de '+s.day+', '+s.date+' às '+s.time+'?'))change([s],false);
+        };
+        acts.append(bTrocar,bDesistir);
+        li.append(acts);
+      }
       $('summaryList').append(li);
     }
     $('clearAll').hidden=!swaps;$('clearAll').disabled=locked||!mine.length;
@@ -152,6 +168,7 @@
       if(!names.includes(user))user='';
       $('userSelect').replaceChildren(new Option('Escolha seu nome…',''),...names.map(n=>new Option(n,n)));$('userSelect').value=user;
       ready=true;say(names.length?(user?'Escala atualizada.':'Escolha seu nome na lista.'):'Nenhum nome disponível na planilha. Fale com a coordenação.');
+      autoLimparAntigas();
     }catch{ready=false;say('Não foi possível carregar a planilha. Toque em Atualizar escala.',true,true);}
     finally{busy=false;render();}
   }
@@ -236,6 +253,145 @@
       say('Erro ao realizar substituição. Atualize a escala.',true,true);
     }finally{busy=false;render();}
   }
+
+  function isMaisDeUmaSemanaPassada(dateStr){
+    if(!dateStr)return false;
+    const parts=dateStr.split('/');
+    if(parts.length!==3)return false;
+    const itemDate=new Date(parseInt(parts[2],10),parseInt(parts[1],10)-1,parseInt(parts[0],10),23,59,59);
+    const now=new Date();
+    return (now-itemDate)>(7*24*60*60*1000);
+  }
+
+  let autoCleanDone=false;
+  function autoLimparAntigas(){
+    if(autoCleanDone||busy)return;
+    const antigas=[];
+    for(const [k,r] of records){
+      if(isMaisDeUmaSemanaPassada(r.date)){
+        for(const n of r.names) antigas.push({date:r.date, time:r.time, name:n});
+      }
+    }
+    if(!antigas.length)return;
+    autoCleanDone=true;
+    setTimeout(async()=>{
+      try{
+        for(const item of antigas){
+          await call('desistir',[item.date,item.time,item.name]);
+        }
+      }catch(e){}
+    },2000);
+  }
+
+  async function trocarMeuHorario(sAntigo){
+    if(busy||!user)return;
+    const futuros=slots.filter(s=>s.key>=localNow()&&s.key!==sAntigo.key&&!selected(s));
+    if(!futuros.length){
+      alert('Não há outros horários futuros disponíveis para troca neste mês.');
+      return;
+    }
+    const opcoes=futuros.map((s,i)=>`${i+1} - ${s.day}, ${s.date} às ${s.time}${s.label?' ('+s.label+')':''}`);
+    const resp=prompt(`Você está marcado(a) em:\n📌 ${sAntigo.day}, ${sAntigo.date} às ${sAntigo.time}\n\nEscolha o NÚMERO do novo horário para onde deseja trocar:\n\n`+opcoes.join('\n'));
+    if(!resp)return;
+    const idx=parseInt(resp,10)-1;
+    if(isNaN(idx)||idx<0||idx>=futuros.length){alert('Opção inválida.');return;}
+    const sNovo=futuros[idx];
+    if(!confirm(`Confirmar troca de horário?\n\n❌ SAIR DE: ${sAntigo.day}, ${sAntigo.date} às ${sAntigo.time}\n✅ IR PARA: ${sNovo.day}, ${sNovo.date} às ${sNovo.time}`))return;
+
+    busy=true;render();
+    try{
+      say(`Trocando horário para ${sNovo.date} às ${sNovo.time}…`,true);
+      const rAntigo=records.get(sAntigo.key);
+      await call('desistir',[rAntigo?.date||sAntigo.date,rAntigo?.time||sAntigo.time,user]);
+      const rows=await call('salvarRegistroRapido',[sNovo.date,sNovo.time,user]);
+      readRows(rows);
+      say(`Troca confirmada na planilha para ${sNovo.day} às ${sNovo.time}!`,true);
+    }catch(e){
+      say('Erro ao trocar horário. Atualize a escala.',true,true);
+    }finally{busy=false;render();}
+  }
+
+  async function apagarEscalasAntigas(){
+    if(busy)return;
+    const antigas=[];
+    for(const [k,r] of records){
+      if(isMaisDeUmaSemanaPassada(r.date)){
+        for(const n of r.names) antigas.push({date:r.date, time:r.time, name:n});
+      }
+    }
+    if(!antigas.length){
+      alert('Nenhuma marcação antiga (com mais de 7 dias) encontrada na planilha. A escala já está limpa!');
+      return;
+    }
+    if(!confirm(`Foram encontradas ${antigas.length} presenças em missas antigas (+7 dias atrás).\n\nDeseja apagar todas da planilha agora?`)) return;
+    busy=true;render();
+    try{
+      say(`Apagando ${antigas.length} presenças antigas da planilha…`,true);
+      for(const item of antigas){
+        const rows=await call('desistir',[item.date,item.time,item.name]);
+        readRows(rows);
+      }
+      say(`Limpeza concluída! ${antigas.length} presenças antigas foram apagadas da planilha.`,true);
+    }catch(e){
+      say('Erro ao apagar escalas antigas. Atualize a página.',true,true);
+    }finally{busy=false;render();}
+  }
+
+  async function zerarMesAtual(){
+    if(busy)return;
+    const doMes=[];
+    const mesNum=pad(month.getMonth()+1);
+    const anoNum=String(month.getFullYear());
+    for(const [k,r] of records){
+      const parts=(r.date||'').split('/');
+      if(parts.length===3&&parts[1]===mesNum&&parts[2]===anoNum){
+        for(const n of r.names) doMes.push({date:r.date, time:r.time, name:n});
+      }
+    }
+    if(!doMes.length){
+      alert('Nenhuma marcação encontrada neste mês.');
+      return;
+    }
+    if(!confirm(`⚠️ ATENÇÃO COORDENADOR!\n\nDeseja ZERAR toda a escala do mês de ${$('monthLabel').textContent}?\n\nIsso vai remover ${doMes.length} presenças marcadas!`)) return;
+    if(!confirm('Confirmação final: Tem certeza absoluta?')) return;
+    busy=true;render();
+    try{
+      say(`Limpando ${doMes.length} presenças do mês…`,true);
+      for(const item of doMes){
+        const rows=await call('desistir',[item.date,item.time,item.name]);
+        readRows(rows);
+      }
+      say('Escala do mês zerada com sucesso na planilha!',true);
+    }catch(e){
+      say('Erro ao zerar mês. Atualize a escala.',true,true);
+    }finally{busy=false;render();}
+  }
+
+  const SENHAS_VALIDAS=['acolitos2026','amoservir'];
+  let isCoord=sessionStorage.getItem('coord_auth')==='1';
+  function setupCoord(){
+    const p=$('coordPanel'), b=$('btnCoord');
+    if(!p||!b)return;
+    p.hidden=!isCoord;
+    b.onclick=()=>{
+      if(isCoord){p.hidden=!p.hidden;return;}
+      const pass=prompt('Digite a senha de Coordenador:');
+      if(!pass)return;
+      if(SENHAS_VALIDAS.includes(pass.trim().toLowerCase())){
+        isCoord=true;sessionStorage.setItem('coord_auth','1');
+        p.hidden=false;say('Acesso de Coordenador liberado!',true);
+      }else{
+        alert('Senha incorreta.');
+      }
+    };
+    if($('btnLimparAntigas'))$('btnLimparAntigas').onclick=apagarEscalasAntigas;
+    if($('btnZerarMes'))$('btnZerarMes').onclick=zerarMesAtual;
+    if($('btnSairCoord'))$('btnSairCoord').onclick=()=>{
+      isCoord=false;sessionStorage.removeItem('coord_auth');
+      p.hidden=true;say('Você saiu do modo coordenador.',true);
+    };
+  }
+
   $('refresh').onclick=refresh;
   $('userSelect').onchange=()=>{user=$('userSelect').value;say(user?'Escolha os horários abaixo.':'Escolha seu nome na lista.');render();};
   for(const [id,offset] of [['prevMonth',-1],['nextMonth',1]])$(id).onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+offset,1,12);render();};
@@ -243,5 +399,6 @@
   for(const b of document.querySelectorAll('[data-bulk]'))b.onclick=()=>change(slots.filter(s=>matches(s,b.dataset.bulk)),true);
   $('clearAll').onclick=()=>{const mine=slots.filter(selected);if(mine.length!==1||confirm('Desmarcar sua missa deste mês?'))change(mine,false);};
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!busy)refresh();});
+  setupCoord();
   refresh();
 })();
