@@ -4,7 +4,7 @@ const supabaseKey = 'sb_publishable_SQd6xVIZnFqAbqwgFel_cw_J-cOIsPO';
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // --- SENHA DOS COORDENADORES ---
-const SENHA_COORDENADOR_PADRAO = 'acolitos2026';
+const SENHA_COORDENADOR_PADRAO = 'amoservir';
 function getSenhaCoordenador() {
     return localStorage.getItem('senha_coordenador') || SENHA_COORDENADOR_PADRAO;
 }

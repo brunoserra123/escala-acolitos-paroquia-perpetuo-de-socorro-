@@ -22,7 +22,7 @@
   let month=new Date(y,m-1,1,12), ready=false,busy=false,user='', names=[],grade={}, swaps=false;
   let records=new Map(),slots=[],toastTimer;
 
-  const SENHAS_VALIDAS=['acolitos2026','amoservir'];
+  const SENHAS_VALIDAS=['amoservir','acolitos2026'];
   let isCoord=sessionStorage.getItem('coord_auth')==='1';
 
   function verificarOuPedirSenhaCoord(motivo){
