@@ -1,6 +1,6 @@
 {
-  "version": "d173840",
-  "updated_at": "2026-11-23T12:42:26Z",
-  "commit": "d1738406568ee337c91456403b95f8e149d851e8",
-  "description": "Seguranca: exigir senha de coordenador para tirar todos ou alterar escala de terceiros, e cache-buster v2.2"
+  "version": "d9ecdb7",
+  "updated_at": "2026-11-23T13:47:33Z",
+  "commit": "d9ecdb74a0a3cd2c9ad02c75eb2ac467bcda0451",
+  "description": "Definir amoservir como senha padrao do coordenador"
 }
