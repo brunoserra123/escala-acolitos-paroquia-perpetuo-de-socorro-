@@ -1,6 +1,6 @@
 {
-  "version": "4e9ba50",
-  "updated_at": "2026-11-23T11:38:44Z",
-  "commit": "4e9ba505cedab5f12ac810cb8804615f7f6889b5",
-  "description": "Painel do Coordenador com limpeza de escalas antigas (>7 dias), zerar mes, auto-limpeza de 1 semana, e botoes Trocar Horario e Desistir"
+  "version": "d173840",
+  "updated_at": "2026-11-23T12:42:26Z",
+  "commit": "d1738406568ee337c91456403b95f8e149d851e8",
+  "description": "Seguranca: exigir senha de coordenador para tirar todos ou alterar escala de terceiros, e cache-buster v2.2"
 }
