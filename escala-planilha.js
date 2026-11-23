@@ -58,6 +58,14 @@
     }return out;
   }
   function node(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!=null)el.textContent=text;return el;}
+  function formatName(n){
+    if(!n)return '';
+    return n.trim().split(/\s+/).map(w=>{
+      const l=w.toLowerCase();
+      if(['de','da','do','dos','das','e'].includes(l))return l;
+      return l.charAt(0).toUpperCase()+l.slice(1);
+    }).join(' ');
+  }
   const selected=s=>!!user&&(records.get(s.key)?.names||[]).includes(user);
   function render(){
     const groups=ready?daysOfMonth():[];slots=groups.flat();
@@ -72,14 +80,36 @@
       if(!$('allDays').checked&&!group[0].weekend)continue;
       const first=group[0],card=node('article','card day'),head=node('div','day-head'),grid=node('div','slots');
       head.append(node('h3','',first.day),node('time','',first.date.slice(0,5)));card.append(head,grid);
-      const roster=node('details','roster');roster.append(node('summary','','Ver quem vai servir'));
+      let totalDayServers=0;
+      const rosterList=node('div','roster-list');
       for(const s of group){
         const inList=selected(s),b=node('button','slot');b.disabled=locked||(inList&&!swaps);b.dataset.slot=s.key;
         b.setAttribute('aria-pressed',String(inList));b.setAttribute('aria-label',s.day+', '+s.date+' às '+s.time+(inList?', marcada':''));
         b.append(node('span','',(inList?'✓ ':'')+s.time),node('small','',s.label||(inList?'Marcada':'Marcar')));
         b.onclick=()=>change([s],!inList);grid.append(b);
-        roster.append(node('p','',s.time+' · '+((records.get(s.key)?.names||[]).join(', ')||'Sem marcações')));
+        const rawNames=(records.get(s.key)?.names||[]).filter(Boolean);
+        totalDayServers+=rawNames.length;
+        const row=node('div','roster-row');
+        const rHead=node('div','roster-row-head');
+        rHead.append(node('span','roster-time-badge','🕒 '+s.time));
+        if(s.label)rHead.append(node('span','roster-label-tag',s.label));
+        rHead.append(node('span','roster-count-badge',rawNames.length?(rawNames.length===1?'1 escalado':rawNames.length+' escalados'):'Vagas abertas'));
+        row.append(rHead);
+        const namesWrap=node('div','roster-names-wrap');
+        if(rawNames.length){
+          for(const n of rawNames){
+            const isMe=!!user&&(n.toLowerCase().trim()===user.toLowerCase().trim());
+            namesWrap.append(node('span','roster-name-tag'+(isMe?' is-me':''),(isMe?'⭐ ':'👤 ')+formatName(n)));
+          }
+        }else{
+          namesWrap.append(node('span','roster-empty-tag','⚪ Ninguém escalado ainda'));
+        }
+        row.append(namesWrap);
+        rosterList.append(row);
       }
+      const roster=node('details','roster');
+      const sumText=totalDayServers?`👥 Ver quem vai servir (${totalDayServers} escalado${totalDayServers===1?'':'s'})`:'👥 Ver quem vai servir (Nenhum ainda)';
+      roster.append(node('summary','roster-summary',sumText),rosterList);
       card.append(roster);$('days').append(card);
     }
     if(ready&&!$('days').childElementCount)$('days').append(node('p','muted','Não há horários futuros nesta seleção.'));
