@@ -1,6 +1,6 @@
 {
-  "version": "d9ecdb7",
-  "updated_at": "2026-11-23T13:47:33Z",
-  "commit": "d9ecdb74a0a3cd2c9ad02c75eb2ac467bcda0451",
-  "description": "Definir amoservir como senha padrao do coordenador"
+  "version": "07c2ab0",
+  "updated_at": "2026-11-23T13:52:31Z",
+  "commit": "07c2ab01b62a59060105dec2e79fbc9e75f9a369",
+  "description": "Seguranca: hash SHA-256 para senhas e suporte completo a PWA para instalacao em iPhone e Android"
 }
