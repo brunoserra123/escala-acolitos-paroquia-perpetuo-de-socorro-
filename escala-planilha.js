@@ -91,15 +91,36 @@
         totalDayServers+=rawNames.length;
         const row=node('div','roster-row');
         const rHead=node('div','roster-row-head');
-        rHead.append(node('span','roster-time-badge','🕒 '+s.time));
-        if(s.label)rHead.append(node('span','roster-label-tag',s.label));
-        rHead.append(node('span','roster-count-badge',rawNames.length?(rawNames.length===1?'1 escalado':rawNames.length+' escalados'):'Vagas abertas'));
+        const leftHead=node('div','roster-head-left');
+        leftHead.append(node('span','roster-time-badge','🕒 '+s.time));
+        if(s.label)leftHead.append(node('span','roster-label-tag',s.label));
+        leftHead.append(node('span','roster-count-badge',rawNames.length?(rawNames.length===1?'1 escalado':rawNames.length+' escalados'):'Vagas abertas'));
+        rHead.append(leftHead);
+        if(swaps&&rawNames.length>0){
+          const actionsWrap=node('div','roster-actions-wrap');
+          const btnSub=node('button','roster-action-btn','🔄 Substituir');
+          btnSub.type='button';btnSub.title='Substituir alguém neste horário';
+          btnSub.onclick=(e)=>{e.stopPropagation();abrirModalSubstituir(s,rawNames);};
+          const btnClear=node('button','roster-action-btn danger','🗑️ Tirar todos');
+          btnClear.type='button';btnClear.title='Tirar todos deste horário';
+          btnClear.onclick=(e)=>{e.stopPropagation();tirarTodosDoHorario(s,rawNames);};
+          actionsWrap.append(btnSub,btnClear);
+          rHead.append(actionsWrap);
+        }
         row.append(rHead);
         const namesWrap=node('div','roster-names-wrap');
         if(rawNames.length){
           for(const n of rawNames){
             const isMe=!!user&&(n.toLowerCase().trim()===user.toLowerCase().trim());
-            namesWrap.append(node('span','roster-name-tag'+(isMe?' is-me':''),(isMe?'⭐ ':'👤 ')+formatName(n)));
+            const tag=node('span','roster-name-tag'+(isMe?' is-me':''));
+            tag.append(node('span','',(isMe?'⭐ ':'👤 ')+formatName(n)));
+            if(swaps){
+              const btnRemove=node('button','roster-btn-remove','×');
+              btnRemove.type='button';btnRemove.title='Tirar '+formatName(n)+' deste horário';
+              btnRemove.onclick=(e)=>{e.stopPropagation();removerNome(s,n);};
+              tag.append(btnRemove);
+            }
+            namesWrap.append(tag);
           }
         }else{
           namesWrap.append(node('span','roster-empty-tag','⚪ Ninguém escalado ainda'));
@@ -154,6 +175,65 @@
     }catch(e){
       ready=false;
       say((count?count+' alteração(ões) já confirmada(s). ':'')+(e.server?e.message:'Não foi possível confirmar a última alteração.')+' Atualize a escala antes de tentar novamente.',true,true);
+    }finally{busy=false;render();}
+  }
+  async function removerNome(s,name){
+    if(busy)return;
+    if(!confirm('Deseja tirar '+formatName(name)+' da missa de '+s.day+', '+s.date+' às '+s.time+'?'))return;
+    busy=true;render();
+    try{
+      say('Tirando '+formatName(name)+' da planilha…',true);
+      const r=records.get(s.key);
+      const rows=await call('desistir',[r?.date||s.date,r?.time||s.time,name]);
+      readRows(rows);
+      say(formatName(name)+' foi retirado(a) da missa.',true);
+    }catch(e){
+      say('Não foi possível retirar da planilha. Atualize a escala.',true,true);
+    }finally{busy=false;render();}
+  }
+  async function tirarTodosDoHorario(s,namesList){
+    if(busy||!namesList.length)return;
+    if(!confirm('Tem certeza que deseja TIRAR TODO MUNDO ('+namesList.length+' pessoas) da missa de '+s.day+', '+s.date+' às '+s.time+'?'))return;
+    busy=true;render();
+    try{
+      say('Tirando todos da missa de '+s.time+'…',true);
+      const r=records.get(s.key);
+      for(const n of namesList){
+        const rows=await call('desistir',[r?.date||s.date,r?.time||s.time,n]);
+        readRows(rows);
+      }
+      say('Todos foram retirados da missa de '+s.time+'.',true);
+    }catch(e){
+      say('Erro ao tirar da planilha. Atualize a escala.',true,true);
+    }finally{busy=false;render();}
+  }
+  async function abrirModalSubstituir(s,namesList){
+    if(busy||!namesList.length)return;
+    let saindo=namesList[0];
+    if(namesList.length>1){
+      const msg='Escolha o NÚMERO de quem vai SAIR da missa das '+s.time+':\n\n'+namesList.map((n,i)=>(i+1)+' - '+formatName(n)).join('\n');
+      const resp=prompt(msg,'1');
+      if(!resp)return;
+      const idx=parseInt(resp,10)-1;
+      if(idx>=0&&idx<namesList.length)saindo=namesList[idx];
+      else{alert('Opção inválida.');return;}
+    }
+    const msgEntra='Quem vai ENTRAR no lugar de '+formatName(saindo)+'?\n\nNomes cadastrados:\n'+names.map(n=>'• '+formatName(n)).join('\n')+'\n\nDigite o nome de quem vai entrar:';
+    const digitado=prompt(msgEntra,user&&user.toLowerCase()!==saindo.toLowerCase()?formatName(user):'');
+    if(!digitado||!digitado.trim())return;
+    const entrando=names.find(x=>x.toLowerCase()===digitado.trim().toLowerCase())||digitado.trim();
+    if(entrando.toLowerCase()===saindo.toLowerCase()){alert('O substituto não pode ser a mesma pessoa.');return;}
+    if(!confirm('Confirmar substituição?\n\n❌ SAI: '+formatName(saindo)+'\n✅ ENTRA: '+formatName(entrando)+'\n\nData: '+s.day+', '+s.date+' às '+s.time))return;
+    busy=true;render();
+    try{
+      say('Substituindo '+formatName(saindo)+' por '+formatName(entrando)+'…',true);
+      const r=records.get(s.key);
+      await call('desistir',[r?.date||s.date,r?.time||s.time,saindo]);
+      const rows=await call('salvarRegistroRapido',[r?.date||s.date,r?.time||s.time,entrando]);
+      readRows(rows);
+      say('Substituição realizada com sucesso na planilha!',true);
+    }catch(e){
+      say('Erro ao realizar substituição. Atualize a escala.',true,true);
     }finally{busy=false;render();}
   }
   $('refresh').onclick=refresh;
