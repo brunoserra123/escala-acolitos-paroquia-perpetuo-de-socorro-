@@ -206,8 +206,12 @@
         $('welcomeUserSelect').value=user;
         if($('btnWelcomeEntrar'))$('btnWelcomeEntrar').disabled=!user;
       }
-      if(!user&&$('welcomeModal')){
-        $('welcomeModal').hidden=false;
+      if($('welcomeModal')){
+        if(sessionStorage.getItem('modal_fechado')==='1'&&user){
+          $('welcomeModal').hidden=true;
+        }else{
+          $('welcomeModal').hidden=false;
+        }
       }
 
       ready=true;say(names.length?(user?'Olá, '+formatName(user)+'! Escala atualizada.':'Escolha seu nome na lista.'):'Nenhum nome disponível na planilha. Fale com a coordenação.');
@@ -447,6 +451,7 @@
         if(!val)return;
         user=val;
         localStorage.setItem('acolito_nome',user);
+        sessionStorage.setItem('modal_fechado','1');
         if($('userSelect'))$('userSelect').value=user;
         modal.hidden=true;
         say('Olá, '+formatName(user)+'! Escolha os horários abaixo.',true);
@@ -455,6 +460,7 @@
     }
     if(btnVis){
       btnVis.onclick=()=>{
+        sessionStorage.setItem('modal_fechado','1');
         modal.hidden=true;
         say('Visualizando escala como visitante.',true);
         render();
@@ -462,6 +468,7 @@
     }
     if(btnTrocar){
       btnTrocar.onclick=()=>{
+        sessionStorage.removeItem('modal_fechado');
         if(sel)sel.value=user||'';
         if(btnEntrar)btnEntrar.disabled=!user;
         modal.hidden=false;
