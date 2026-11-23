@@ -1,6 +1,6 @@
 {
-  "version": "330a025",
-  "updated_at": "2026-11-22T16:17:43Z",
-  "commit": "330a025442297a4554a1f1337fd347d95e06c0f4",
-  "description": "Mostrar o dia da semana ao lado da data em Minhas escolhas"
+  "version": "7ec2199",
+  "updated_at": "2026-11-23T10:55:55Z",
+  "commit": "7ec21995903d08cde239c27e509c63d522cc8d12",
+  "description": "Visual: modernizar e destacar lista de quem vai servir com cards, badges e tags de nomes"
 }
