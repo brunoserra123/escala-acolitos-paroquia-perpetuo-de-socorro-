@@ -1,6 +1,6 @@
 {
-  "version": "07c2ab0",
-  "updated_at": "2026-11-23T13:52:31Z",
-  "commit": "07c2ab01b62a59060105dec2e79fbc9e75f9a369",
-  "description": "Seguranca: hash SHA-256 para senhas e suporte completo a PWA para instalacao em iPhone e Android"
+  "version": "74812b6",
+  "updated_at": "2026-11-23T13:58:32Z",
+  "commit": "74812b63c1e810aa05503e031b9280633beb6858",
+  "description": "Tela inicial Quem e voce para selecionar acolito ao abrir o site"
 }
