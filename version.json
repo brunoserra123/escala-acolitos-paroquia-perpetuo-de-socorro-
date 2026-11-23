@@ -1,6 +1,6 @@
 {
-  "version": "74812b6",
-  "updated_at": "2026-11-23T13:58:32Z",
-  "commit": "74812b63c1e810aa05503e031b9280633beb6858",
-  "description": "Tela inicial Quem e voce para selecionar acolito ao abrir o site"
+  "version": "33c4f5a",
+  "updated_at": "2026-11-23T14:05:02Z",
+  "commit": "33c4f5a31bd29479e7a4a3500503b843c954006a",
+  "description": "Exibir tela inicial Quem e voce imediatamente e limpar caches antigos do ServiceWorker"
 }
