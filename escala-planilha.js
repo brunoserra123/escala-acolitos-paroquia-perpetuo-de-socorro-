@@ -195,9 +195,22 @@
       const [rows,n,g,c]=await Promise.all(['obterEscalaParaWeb','obterNomesAcolitos','obterGradeMissas','obterConfigSite'].map(fn=>call(fn)));
       if(!Array.isArray(n)||!g||typeof g!=='object'||!c)throw Error();
       readRows(rows);names=n.filter(x=>typeof x==='string'&&x).sort((a,b)=>a.localeCompare(b,'pt-BR'));grade=g;swaps=c.trocas===true;
+      const salvo=localStorage.getItem('acolito_nome')||'';
+      if(salvo&&names.includes(salvo))user=salvo;
       if(!names.includes(user))user='';
-      $('userSelect').replaceChildren(new Option('Escolha seu nome…',''),...names.map(n=>new Option(n,n)));$('userSelect').value=user;
-      ready=true;say(names.length?(user?'Escala atualizada.':'Escolha seu nome na lista.'):'Nenhum nome disponível na planilha. Fale com a coordenação.');
+      $('userSelect').replaceChildren(new Option('Escolha seu nome…',''),...names.map(n=>new Option(formatName(n),n)));
+      $('userSelect').value=user;
+
+      if($('welcomeUserSelect')){
+        $('welcomeUserSelect').replaceChildren(new Option('-- Selecione seu nome na lista --',''),...names.map(n=>new Option(formatName(n),n)));
+        $('welcomeUserSelect').value=user;
+        if($('btnWelcomeEntrar'))$('btnWelcomeEntrar').disabled=!user;
+      }
+      if(!user&&$('welcomeModal')){
+        $('welcomeModal').hidden=false;
+      }
+
+      ready=true;say(names.length?(user?'Olá, '+formatName(user)+'! Escala atualizada.':'Escolha seu nome na lista.'):'Nenhum nome disponível na planilha. Fale com a coordenação.');
       autoLimparAntigas();
     }catch{ready=false;say('Não foi possível carregar a planilha. Toque em Atualizar escala.',true,true);}
     finally{busy=false;render();}
@@ -420,13 +433,56 @@
     };
   }
 
+  function setupWelcomeModal(){
+    const modal=$('welcomeModal'), sel=$('welcomeUserSelect'), btnEntrar=$('btnWelcomeEntrar'), btnVis=$('btnWelcomeVisitante'), btnTrocar=$('btnTrocarNome');
+    if(!modal)return;
+    if(sel){
+      sel.onchange=()=>{
+        if(btnEntrar)btnEntrar.disabled=!sel.value;
+      };
+    }
+    if(btnEntrar){
+      btnEntrar.onclick=()=>{
+        const val=sel?.value;
+        if(!val)return;
+        user=val;
+        localStorage.setItem('acolito_nome',user);
+        if($('userSelect'))$('userSelect').value=user;
+        modal.hidden=true;
+        say('Olá, '+formatName(user)+'! Escolha os horários abaixo.',true);
+        render();
+      };
+    }
+    if(btnVis){
+      btnVis.onclick=()=>{
+        modal.hidden=true;
+        say('Visualizando escala como visitante.',true);
+        render();
+      };
+    }
+    if(btnTrocar){
+      btnTrocar.onclick=()=>{
+        if(sel)sel.value=user||'';
+        if(btnEntrar)btnEntrar.disabled=!user;
+        modal.hidden=false;
+      };
+    }
+  }
+
   $('refresh').onclick=refresh;
-  $('userSelect').onchange=()=>{user=$('userSelect').value;say(user?'Escolha os horários abaixo.':'Escolha seu nome na lista.');render();};
+  $('userSelect').onchange=()=>{
+    user=$('userSelect').value;
+    if(user)localStorage.setItem('acolito_nome',user);
+    if($('welcomeUserSelect'))$('welcomeUserSelect').value=user;
+    say(user?'Olá, '+formatName(user)+'! Escolha os horários abaixo.':'Escolha seu nome na lista.');
+    render();
+  };
   for(const [id,offset] of [['prevMonth',-1],['nextMonth',1]])$(id).onclick=()=>{month=new Date(month.getFullYear(),month.getMonth()+offset,1,12);render();};
   $('allDays').onchange=render;
   for(const b of document.querySelectorAll('[data-bulk]'))b.onclick=()=>change(slots.filter(s=>matches(s,b.dataset.bulk)),true);
   $('clearAll').onclick=()=>{const mine=slots.filter(selected);if(mine.length!==1||confirm('Desmarcar sua missa deste mês?'))change(mine,false);};
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!busy)refresh();});
   setupCoord();
+  setupWelcomeModal();
   refresh();
 })();
